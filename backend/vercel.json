@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "functions": {
+    "api/index.js": {
+      "regions": ["bom1"],
+      "maxDuration": 60,
+      "memory": 1024,
+      "includeFiles": "{assets,src/generated}/**"
+    }
+  },
+  "routes": [{ "src": "/(.*)", "dest": "/api/index.js" }]
+}
