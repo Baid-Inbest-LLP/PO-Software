@@ -2,7 +2,7 @@ const chromium = require("@sparticuz/chromium");
 const puppeteerCore = require("puppeteer-core");
 
 let browserPromise = null;
-const isVercelRuntime = Boolean(process.env.VERCEL);
+const usePackagedChromium = Boolean(process.env.VERCEL || process.env.RENDER);
 
 /**
  * Resolve the Chrome/Chromium executable path for local development.
@@ -35,7 +35,7 @@ function getLocalChromePath() {
 async function getBrowser() {
   if (!browserPromise) {
     browserPromise = (async () => {
-      if (isVercelRuntime) {
+      if (usePackagedChromium) {
         const executablePath = await chromium.executablePath();
         return puppeteerCore.launch({
           args: chromium.args,
@@ -63,7 +63,7 @@ async function getBrowser() {
 }
 
 // Pre-warm only outside serverless runtimes.
-if (!isVercelRuntime) {
+if (!usePackagedChromium) {
   getBrowser().catch((err) => {
     console.error("Failed to pre-warm Puppeteer:", err);
     browserPromise = null;

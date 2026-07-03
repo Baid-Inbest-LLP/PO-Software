@@ -12,7 +12,7 @@ const normalizeApiBaseUrl = (url) => {
 
 // Dev: use Vite proxy (/api). Production: always normalize env URL (append /api when missing).
 // Same-origin /api only works when frontend and backend share one host; split Vercel deploys need an explicit backend URL.
-const PRODUCTION_API_FALLBACK = 'https://po-software-api.vercel.app/api';
+const PRODUCTION_API_FALLBACK = 'https://po-server.onrender.com/api';
 const baseURL = isDev
   ? (envBaseUrl || '/api')
   : (normalizeApiBaseUrl(envBaseUrl) || PRODUCTION_API_FALLBACK);

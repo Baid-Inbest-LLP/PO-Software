@@ -1,0 +1,48 @@
+# Render Blueprint — PO Software (pnpm monorepo)
+# Repo: https://github.com/Baid-Inbest-LLP/PO-Software
+#
+# Before deploy:
+# 1. Set MONGODB_URI on po-server (Render Dashboard → Environment).
+# 2. In MongoDB Atlas → Network Access, allow 0.0.0.0/0 (or Render egress IPs).
+# 3. After first deploy, set FRONTEND_URL on po-server to your static site URL
+#    (e.g. https://po-client.onrender.com) if the name differs from below.
+
+services:
+  - type: web
+    name: po-server
+    runtime: node
+    plan: starter
+    region: singapore
+    repo: https://github.com/Baid-Inbest-LLP/PO-Software
+    branch: main
+    autoDeploy: true
+    buildCommand: pnpm install --frozen-lockfile
+    startCommand: pnpm --filter server start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: FRONTEND_URL
+        value: https://po-client.onrender.com
+
+  - type: web
+    name: po-client
+    runtime: static
+    repo: https://github.com/Baid-Inbest-LLP/PO-Software
+    branch: main
+    autoDeploy: true
+    buildCommand: pnpm --filter client build
+    staticPublishPath: client/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://po-server.onrender.com/api

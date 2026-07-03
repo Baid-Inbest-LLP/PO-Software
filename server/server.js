@@ -47,10 +47,10 @@ app.use(compression());
 const isAllowedOrigin = (origin) => {
   const normalizedOrigin = normalizeOrigin(origin);
   if (allowedOrigins.includes(normalizedOrigin)) return true;
-  // Vercel preview/production frontends (*.vercel.app) when FRONTEND_URL is not updated yet.
+  // Vercel / Render frontends when FRONTEND_URL is not updated yet.
   try {
     const { hostname } = new URL(origin);
-    if (hostname.endsWith('.vercel.app')) return true;
+    if (hostname.endsWith('.vercel.app') || hostname.endsWith('.onrender.com')) return true;
   } catch {
     return false;
   }
@@ -179,7 +179,7 @@ app.use(errorHandler);
 
 if (require.main === module) {
   const PORT = process.env.PORT || 5003;
-  const server = app.listen(PORT, () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   });
   server.on('error', (err) => {

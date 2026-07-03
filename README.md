@@ -149,7 +149,29 @@ See `server/src/routes/` for full route definitions.
 
 ## Deployment
 
-### Vercel (current)
+### Render (recommended — same pattern as Mer-App)
+
+1. **Push** this repo to GitHub (`main` branch) with `render.yaml` at the root.
+2. In [Render Dashboard](https://dashboard.render.com) → **New** → **Blueprint** → connect `Baid-Inbest-LLP/PO-Software`.
+3. On **po-server**, set `MONGODB_URI` (MongoDB Atlas connection string for `po-software` DB).
+4. In **MongoDB Atlas** → Network Access → allow `0.0.0.0/0` (or Render egress IPs).
+5. Deploy. Note the live URLs (e.g. `https://po-server.onrender.com`, `https://po-client.onrender.com`).
+6. If your static site URL differs from `https://po-client.onrender.com`, update on **po-server**:
+   - `FRONTEND_URL` = your static site URL (no trailing slash)
+7. If you rename services in Render, update **po-client** env:
+   - `VITE_API_BASE_URL` = `https://<your-api-host>/api`
+8. Redeploy both services after env changes.
+
+| Service | Type | Health check |
+|---------|------|----------------|
+| po-server | Node web | `/api/health` |
+| po-client | Static site | SPA rewrite → `index.html` |
+
+**Do not** use `corepack enable` in build commands — Render already provides pnpm.
+
+**PDF generation** uses `@sparticuz/chromium` on Render (via `RENDER=true`).
+
+### Vercel (legacy)
 
 Deploy **two** Vercel projects from this monorepo:
 
