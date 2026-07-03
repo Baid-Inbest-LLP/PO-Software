@@ -37,7 +37,7 @@ const normalizeOrigin = (value = '') =>
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   ...(process.env.FRONTEND_URLS || '').split(',').map((x) => x.trim()).filter(Boolean),
-  'http://localhost:5173',
+  'http://localhost:5175',
 ]
   .filter(Boolean)
   .map(normalizeOrigin);
@@ -178,9 +178,18 @@ app.use('/api/settings', settingsRoutes);
 app.use(errorHandler);
 
 if (require.main === module) {
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
+  const PORT = process.env.PORT || 5003;
+  const server = app.listen(PORT, () => {
     console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  });
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(
+        `Port ${PORT} is already in use. Stop the other process or change PORT in server/.env`,
+      );
+      process.exit(1);
+    }
+    throw err;
   });
 }
 

@@ -44,7 +44,7 @@ async function migrateCollection(Model, label, adminId) {
 
 async function run() {
   if (!process.env.MONGODB_URI) {
-    console.error('Missing MONGODB_URI in backend/.env');
+    console.error('Missing MONGODB_URI in server/.env');
     process.exit(1);
   }
 

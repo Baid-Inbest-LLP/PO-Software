@@ -1,7 +1,7 @@
 {
-  "name": "po-software-backend",
+  "name": "server",
   "version": "1.0.0",
-  "packageManager": "pnpm@10.18.3",
+  "private": true,
   "description": "Purchase Order Software - Backend API",
   "main": "server.js",
   "scripts": {

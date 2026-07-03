@@ -24,8 +24,10 @@ const loadEmbeddedFromFsFallback = () => {
   const candidates = [
     path.join(__dirname, '../generated/embeddedAssets.json'),
     path.join(process.cwd(), 'src/generated/embeddedAssets.json'),
+    path.join(process.cwd(), 'server/src/generated/embeddedAssets.json'),
     path.join(process.cwd(), 'backend/src/generated/embeddedAssets.json'),
     '/var/task/src/generated/embeddedAssets.json',
+    path.join('/var/task/server/src/generated', 'embeddedAssets.json'),
     path.join('/var/task/backend/src/generated', 'embeddedAssets.json'),
   ];
   for (const p of candidates) {
@@ -95,8 +97,10 @@ const getAssetDirCandidates = () => {
 
   const cwd = process.cwd();
   add(path.join(cwd, 'assets'));
+  add(path.join(cwd, 'server', 'assets'));
   add(path.join(cwd, 'backend', 'assets'));
   add(path.join('/var/task', 'assets'));
+  add(path.join('/var/task', 'server', 'assets'));
   add(path.join('/var/task', 'backend', 'assets'));
 
   if (process.env.LAMBDA_TASK_ROOT) {

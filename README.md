@@ -1,6 +1,6 @@
 # PO Software - Purchase Order Management System
 
-A full-stack Purchase Order management system built with React + Redux Toolkit (frontend) and Node.js + Express + MongoDB (backend).
+A full-stack Purchase Order management system built with React + Redux Toolkit (client) and Node.js + Express + MongoDB (server).
 
 ## Features
 
@@ -24,9 +24,10 @@ A full-stack Purchase Order management system built with React + Redux Toolkit (
 | Frontend | React 18, Redux Toolkit, React Router v6, Tailwind CSS |
 | Backend | Node.js, Express, MongoDB, Mongoose |
 | Auth | JWT (jsonwebtoken + bcryptjs) |
-| PDF | PDFKit |
+| PDF | Puppeteer / PDFKit |
 | Excel | ExcelJS |
-| Deployment | AWS (EC2 / ECS + MongoDB Atlas) |
+| Tooling | pnpm workspaces |
+| Deployment | Vercel (client + server) or AWS |
 
 ---
 
@@ -34,25 +35,10 @@ A full-stack Purchase Order management system built with React + Redux Toolkit (
 
 ```
 PO-Software/
-├── backend/
-│   ├── src/
-│   │   ├── config/       # MongoDB connection
-│   │   ├── controllers/  # Route handlers
-│   │   ├── models/       # Mongoose schemas
-│   │   ├── routes/       # Express routers
-│   │   ├── middleware/   # Auth, error handler
-│   │   └── utils/        # PDF/Excel generators, helpers
-│   ├── server.js
-│   └── .env
-├── frontend/
-│   ├── src/
-│   │   ├── app/          # Redux store
-│   │   ├── features/     # Redux slices (auth, vendors, items, POs)
-│   │   ├── components/   # Layout, Navbar, Sidebar
-│   │   ├── pages/        # All page components
-│   │   ├── services/     # Axios API layer
-│   │   └── utils/        # Helpers, formatters
-│   └── vite.config.js
+├── client/              # React frontend (Vite)
+├── server/              # Express API
+├── pnpm-workspace.yaml
+├── package.json         # Root scripts
 └── README.md
 ```
 
@@ -63,48 +49,57 @@ PO-Software/
 ### Prerequisites
 
 - Node.js 18+
+- pnpm 9+
 - MongoDB (local or Atlas)
 
-### 1. Clone & Install
+### 1. Install dependencies
 
 ```bash
-# Backend
-cd backend
-npm install
-
-# Frontend
-cd ../frontend
-npm install
+cd PO-Software
+pnpm install
 ```
 
-### 2. Configure Environment
+### 2. Configure environment
 
-Edit `backend/.env`:
+```bash
+cp server/.env.example server/.env
+cp client/.env.example client/.env   # optional for local dev (Vite proxy is default)
+```
+
+Edit `server/.env`:
 
 ```env
-PORT=5000
+PORT=5003
 MONGODB_URI=mongodb://localhost:27017/po-software
 JWT_SECRET=your_super_secret_key_change_this
 JWT_EXPIRES_IN=7d
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:5175
 NODE_ENV=development
 ```
 
-### 3. Start Development Servers
+### 3. Run development servers
 
-**Backend** (runs on port 5000):
+Both in parallel:
+
 ```bash
-cd backend
-npm run dev
+pnpm dev
 ```
 
-**Frontend** (runs on port 5173, proxies /api → backend):
+Or separately:
+
 ```bash
-cd frontend
-npm run dev
+pnpm dev:server   # API on port 5003
+pnpm dev:client   # Vite on port 5175 (proxies /api → server)
 ```
 
-Open http://localhost:5173 and register an account.
+Open http://localhost:5175 and register an account.
+
+### 4. Production build
+
+```bash
+pnpm build        # builds client → client/dist
+pnpm start        # runs server
+```
 
 ---
 
@@ -132,42 +127,47 @@ Open http://localhost:5173 and register an account.
 | GET | `/api/purchase-orders/:id/download/excel` | Download Excel |
 | GET | `/api/purchase-orders/dashboard` | Dashboard stats |
 
-### Vendors
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/vendors` | List vendors |
-| POST | `/api/vendors` | Create vendor |
-| PUT | `/api/vendors/:id` | Update vendor |
-| DELETE | `/api/vendors/:id` | Delete vendor |
-
-### Items
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/items` | List items |
-| POST | `/api/items` | Create item |
-| PUT | `/api/items/:id` | Update item |
-| DELETE | `/api/items/:id` | Delete item |
+### Vendors & Items
+See `server/src/routes/` for full route definitions.
 
 ---
 
-## AWS Deployment
+## Scripts
 
-### Backend (EC2 or ECS)
-1. Use MongoDB Atlas as your database (update `MONGODB_URI`)
-2. Build and deploy backend to EC2 or containerize with Docker for ECS
-3. Use PM2 for process management on EC2: `pm2 start server.js`
-4. Set environment variables via AWS Secrets Manager or EC2 user data
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Run client + server in parallel |
+| `pnpm dev:client` | Vite dev server |
+| `pnpm dev:server` | API with nodemon |
+| `pnpm build` | Build client for production |
+| `pnpm start` | Start production API |
+| `pnpm seed:dummy` | Seed sample data |
+| `pnpm migrate:to-admin` | Migrate data to admin user |
+| `pnpm migrate:item-departments` | Migrate item departments |
 
-### Frontend (S3 + CloudFront)
-1. Build: `cd frontend && npm run build`
-2. Upload `dist/` to S3 bucket (static website hosting)
-3. Create CloudFront distribution pointing to S3
-4. Update `vite.config.js` proxy or use environment variable for API URL
+---
 
-### Recommended AWS Services
-- **EC2** or **ECS (Fargate)** — Backend API
-- **MongoDB Atlas** — Database (or Amazon DocumentDB)
-- **S3 + CloudFront** — Frontend hosting
-- **Route 53** — Custom domain
-- **ACM** — SSL certificates
-- **ALB** — Load balancer for backend
+## Deployment
+
+### Vercel (current)
+
+Deploy **two** Vercel projects from this monorepo:
+
+| Project | Root directory | Build command |
+|---------|----------------|---------------|
+| API | `server` | (uses `server/vercel.json`) |
+| UI | `client` | `pnpm build` |
+
+Set `VITE_API_BASE_URL` on the client to your API URL. Set `FRONTEND_URL` on the server to your client URL.
+
+### AWS (alternative)
+
+- **Backend:** EC2 or ECS with `pnpm --filter server start`
+- **Frontend:** Build `client/dist` and host on S3 + CloudFront
+- **Database:** MongoDB Atlas
+
+---
+
+## License
+
+Private / internal use.
