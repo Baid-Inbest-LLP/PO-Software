@@ -6,13 +6,10 @@ const usePackagedChromium = Boolean(process.env.VERCEL || process.env.RENDER);
 
 /**
  * Resolve the Chrome/Chromium executable path for local development.
- * Checks PUPPETEER_EXECUTABLE_PATH env var first, then falls back to
- * puppeteer-core's bundled finder or common system paths.
  */
 function getLocalChromePath() {
   if (process.env.PUPPETEER_EXECUTABLE_PATH)
     return process.env.PUPPETEER_EXECUTABLE_PATH;
-  // Common paths for Windows / Linux / macOS
   const candidates = [
     "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
@@ -32,22 +29,33 @@ function getLocalChromePath() {
   return undefined;
 }
 
-async function getBrowser() {
+async function launchPackagedBrowser() {
+  // Disable WebGL/swiftshader extraction — saves memory on Render/Vercel.
+  chromium.setGraphicsMode = false;
+
+  const executablePath = await chromium.executablePath();
+  if (!executablePath) {
+    throw new Error("Packaged Chromium executable path could not be resolved");
+  }
+
+  return puppeteerCore.launch({
+    args: [...chromium.args, "--disable-dev-shm-usage"],
+    defaultViewport: chromium.defaultViewport,
+    executablePath,
+    headless: chromium.headless,
+    ignoreHTTPSErrors: true,
+  });
+}
+
+async function getLocalBrowser() {
   if (!browserPromise) {
     browserPromise = (async () => {
-      if (usePackagedChromium) {
-        const executablePath = await chromium.executablePath();
-        return puppeteerCore.launch({
-          args: chromium.args,
-          defaultViewport: chromium.defaultViewport,
-          executablePath,
-          headless: chromium.headless,
-        });
-      }
-
-      // Local development: puppeteer's bundled Chromium is skipped (.puppeteerrc.cjs skipDownload).
-      // Use puppeteer-core with the system Chrome instead.
       const executablePath = getLocalChromePath();
+      if (!executablePath) {
+        throw new Error(
+          "Chrome/Chromium not found locally. Set PUPPETEER_EXECUTABLE_PATH in server/.env",
+        );
+      }
       return puppeteerCore.launch({
         headless: true,
         executablePath,
@@ -62,22 +70,21 @@ async function getBrowser() {
   return browserPromise;
 }
 
-// Pre-warm only outside serverless runtimes.
+// Pre-warm only for local dev (long-running Chrome).
 if (!usePackagedChromium) {
-  getBrowser().catch((err) => {
+  getLocalBrowser().catch((err) => {
     console.error("Failed to pre-warm Puppeteer:", err);
     browserPromise = null;
   });
 }
 
-// Ensure Chromium is cleaned up on shutdown (prevents zombie Chromium processes).
 const shutdown = async () => {
   try {
     if (!browserPromise) return;
     const browser = await browserPromise;
     if (browser && browser.close) await browser.close();
-  } catch (err) {
-    // Ignore shutdown errors
+  } catch {
+    /* ignore */
   }
 };
 
@@ -88,14 +95,15 @@ async function renderHtmlToPdfBuffer(
   html,
   { headerHtml = "", footerHtml = "" } = {},
 ) {
-  const browser = await getBrowser();
+  // On Render/Vercel: launch a fresh browser per request (avoids stale/OOM singleton).
+  const browser = usePackagedChromium
+    ? await launchPackagedBrowser()
+    : await getLocalBrowser();
+
   let page;
   try {
     page = await browser.newPage();
-    // The PDF template is self-contained (assets are inlined as data URIs),
-    // so waiting for network idle only slows things down (and can block on external fonts).
     await page.setContent(html, { waitUntil: "domcontentloaded" });
-    // Data-URI images can decode after DCL; wait so PDF paint includes all <img> (stamps, logos).
     await page
       .evaluate(() =>
         Promise.all(
@@ -131,7 +139,8 @@ async function renderHtmlToPdfBuffer(
 
     return buffer;
   } finally {
-    if (page) await page.close();
+    if (page) await page.close().catch(() => {});
+    if (usePackagedChromium && browser) await browser.close().catch(() => {});
   }
 }
 

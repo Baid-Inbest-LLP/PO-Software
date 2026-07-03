@@ -159,9 +159,15 @@ export const purchaseOrdersAPI = {
   delete: (id) => api.delete(`/purchase-orders/${id}`),
   getDashboard: (params) => api.get('/purchase-orders/dashboard', { params }),
   downloadPDF: (id) =>
-    api.get(`/purchase-orders/${id}/download/pdf`, { responseType: 'blob' }),
+    api.get(`/purchase-orders/${id}/download/pdf`, {
+      responseType: 'blob',
+      timeout: 120000,
+    }),
   downloadExcel: (id) =>
-    api.get(`/purchase-orders/${id}/download/excel`, { responseType: 'blob' }),
+    api.get(`/purchase-orders/${id}/download/excel`, {
+      responseType: 'blob',
+      timeout: 120000,
+    }),
 };
 
 // Settings

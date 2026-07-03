@@ -403,7 +403,7 @@ const downloadPDF = async (req, res) => {
     console.error('PDF generation failed:', err);
     res.status(500).json({
       message: 'PDF generation failed',
-      ...(process.env.NODE_ENV === 'development' ? { details: err?.message || details } : {}),
+      details: err?.message || String(err),
     });
   }
 };
