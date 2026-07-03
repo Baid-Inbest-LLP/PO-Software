@@ -26,8 +26,8 @@ A full-stack Purchase Order management system built with React + Redux Toolkit (
 | Auth | JWT (jsonwebtoken + bcryptjs) |
 | PDF | Puppeteer / PDFKit |
 | Excel | ExcelJS |
-| Tooling | pnpm workspaces |
-| Deployment | Vercel (client + server) or AWS |
+| Tooling | pnpm workspaces, Docker |
+| Deployment | Render, Vercel, or Docker |
 
 ---
 
@@ -38,6 +38,7 @@ PO-Software/
 ├── client/              # React frontend (Vite)
 ├── server/              # Express API
 ├── pnpm-workspace.yaml
+├── docker-compose.yml
 ├── package.json         # Root scripts
 └── README.md
 ```
@@ -94,6 +95,33 @@ pnpm dev:client   # Vite on port 5175 (proxies /api → server)
 
 Open http://localhost:5175 and register an account.
 
+## Docker
+
+Run the full stack (MongoDB + API + nginx UI) like Mer-App / Cash-Book:
+
+```bash
+# Optional: set secrets for docker compose
+export JWT_SECRET=your-secret
+
+docker compose up --build
+# or: pnpm docker:up
+```
+
+| Service | URL |
+|---------|-----|
+| UI (nginx) | http://localhost:8082 |
+| API (direct) | http://localhost:5003/api/v1/health |
+| MongoDB | localhost:27018 (`po-software` DB) |
+
+The client container proxies `/api` → the server container (API base path `/api/v1`). PDF generation uses system Chromium in the server image.
+
+Stop:
+
+```bash
+docker compose down
+# or: pnpm docker:down
+```
+
 ### 4. Production build
 
 ```bash
@@ -105,27 +133,29 @@ pnpm start        # runs server
 
 ## API Endpoints
 
+Base URL: `/api/v1`
+
 ### Auth
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/api/auth/register` | Register user |
-| POST | `/api/auth/login` | Login |
-| GET | `/api/auth/me` | Get current user |
-| PUT | `/api/auth/profile` | Update profile |
-| PUT | `/api/auth/change-password` | Change password |
+| POST | `/api/v1/auth/register` | Register user |
+| POST | `/api/v1/auth/login` | Login |
+| GET | `/api/v1/auth/me` | Get current user |
+| PUT | `/api/v1/auth/profile` | Update profile |
+| PUT | `/api/v1/auth/change-password` | Change password |
 
 ### Purchase Orders
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/api/purchase-orders` | List all POs |
-| POST | `/api/purchase-orders` | Create PO |
-| GET | `/api/purchase-orders/:id` | Get PO detail |
-| PUT | `/api/purchase-orders/:id` | Update PO |
-| DELETE | `/api/purchase-orders/:id` | Delete draft PO |
-| PATCH | `/api/purchase-orders/:id/status` | Update status |
-| GET | `/api/purchase-orders/:id/download/pdf` | Download PDF |
-| GET | `/api/purchase-orders/:id/download/excel` | Download Excel |
-| GET | `/api/purchase-orders/dashboard` | Dashboard stats |
+| GET | `/api/v1/purchase-orders` | List all POs |
+| POST | `/api/v1/purchase-orders` | Create PO |
+| GET | `/api/v1/purchase-orders/:id` | Get PO detail |
+| PUT | `/api/v1/purchase-orders/:id` | Update PO |
+| DELETE | `/api/v1/purchase-orders/:id` | Delete draft PO |
+| PATCH | `/api/v1/purchase-orders/:id/status` | Update status |
+| GET | `/api/v1/purchase-orders/:id/download/pdf` | Download PDF |
+| GET | `/api/v1/purchase-orders/:id/download/excel` | Download Excel |
+| GET | `/api/v1/purchase-orders/dashboard` | Dashboard stats |
 
 ### Vendors & Items
 See `server/src/routes/` for full route definitions.
@@ -159,12 +189,12 @@ See `server/src/routes/` for full route definitions.
 6. If your static site URL differs from `https://po-client.onrender.com`, update on **po-server**:
    - `FRONTEND_URL` = your static site URL (no trailing slash)
 7. If you rename services in Render, update **po-client** env:
-   - `VITE_API_BASE_URL` = `https://<your-api-host>/api`
+   - `VITE_API_URL` = `https://<your-api-host>/api/v1`
 8. Redeploy both services after env changes.
 
 | Service | Type | Health check |
 |---------|------|----------------|
-| po-server | Node web | `/api/health` |
+| po-server | Node web | `/api/v1/health` |
 | po-client | Static site | SPA rewrite → `index.html` |
 
 **Do not** use `corepack enable` in build commands — Render already provides pnpm.
@@ -180,7 +210,7 @@ Deploy **two** Vercel projects from this monorepo:
 | API | `server` | (uses `server/vercel.json`) |
 | UI | `client` | `pnpm build` |
 
-Set `VITE_API_BASE_URL` on the client to your API URL. Set `FRONTEND_URL` on the server to your client URL.
+Set `VITE_API_URL` on the client to your API URL. Set `FRONTEND_URL` on the server to your client URL.
 
 ### AWS (alternative)
 

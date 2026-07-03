@@ -107,17 +107,17 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
   const isLiveCrudListRoute =
-    req.path.startsWith('/api/items') ||
-    req.path.startsWith('/api/vendors') ||
-    req.path.startsWith('/api/purchase-orders') ||
-    req.path.startsWith('/api/auth/users');
+    req.path.startsWith('/api/v1/items') ||
+    req.path.startsWith('/api/v1/vendors') ||
+    req.path.startsWith('/api/v1/purchase-orders') ||
+    req.path.startsWith('/api/v1/auth/users');
 
-  if (req.method === 'GET' && req.path.startsWith('/api') && !isLiveCrudListRoute) {
+  if (req.method === 'GET' && req.path.startsWith('/api/v1') && !isLiveCrudListRoute) {
     // Short private browser cache for authenticated GET responses.
     // Helps repeated page loads in production without sharing user data.
     res.setHeader('Cache-Control', 'private, max-age=30, stale-while-revalidate=60');
   }
-  if (req.path === '/api/auth/me' || isLiveCrudListRoute) {
+  if (req.path === '/api/v1/auth/me' || isLiveCrudListRoute) {
     res.setHeader('Cache-Control', 'no-store');
   }
 
@@ -164,16 +164,16 @@ app.use((req, res, next) => {
   return next();
 });
 
-app.get('/api/health', (req, res) => {
+app.get('/api/v1/health', (req, res) => {
   res.json({ status: 'OK', message: 'PO Software API is running', deployedAt: new Date().toISOString() });
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/companies', companyRoutes);
-app.use('/api/vendors', vendorRoutes);
-app.use('/api/items', itemRoutes);
-app.use('/api/purchase-orders', purchaseOrderRoutes);
-app.use('/api/settings', settingsRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/companies', companyRoutes);
+app.use('/api/v1/vendors', vendorRoutes);
+app.use('/api/v1/items', itemRoutes);
+app.use('/api/v1/purchase-orders', purchaseOrderRoutes);
+app.use('/api/v1/settings', settingsRoutes);
 
 app.use(errorHandler);
 

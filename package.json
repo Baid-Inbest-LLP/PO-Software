@@ -11,7 +11,9 @@
     "start": "pnpm --filter server start",
     "seed:dummy": "pnpm --filter server seed:dummy",
     "migrate:to-admin": "pnpm --filter server migrate:to-admin",
-    "migrate:item-departments": "pnpm --filter server migrate:item-departments"
+    "migrate:item-departments": "pnpm --filter server migrate:item-departments",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down"
   },
   "engines": {
     "node": ">=18.0.0",

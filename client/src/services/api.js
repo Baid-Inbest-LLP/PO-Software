@@ -1,26 +1,26 @@
 import axios from 'axios';
 
-const envBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const envBaseUrl = import.meta.env.VITE_API_URL;
 const isDev = import.meta.env.DEV;
 
 const normalizeApiBaseUrl = (url) => {
   if (!url) return '';
   const trimmed = String(url).trim().replace(/\/+$/, '');
-  if (trimmed.endsWith('/api')) return trimmed;
-  return `${trimmed}/api`;
+  if (trimmed.endsWith('/api/v1')) return trimmed;
+  if (trimmed.endsWith('/api')) return `${trimmed}/v1`;
+  return `${trimmed}/api/v1`;
 };
 
-// Dev: use Vite proxy (/api). Production: always normalize env URL (append /api when missing).
-// Same-origin /api only works when frontend and backend share one host; split Vercel deploys need an explicit backend URL.
-const PRODUCTION_API_FALLBACK = 'https://po-server.onrender.com/api';
+// Dev: use Vite proxy (/api). Production: normalize env URL (append /api/v1 when missing).
+// Production: set VITE_API_URL at build time (Render). Docker/nginx uses same-origin /api/v1.
 const baseURL = isDev
-  ? (envBaseUrl || '/api')
-  : (normalizeApiBaseUrl(envBaseUrl) || PRODUCTION_API_FALLBACK);
+  ? (envBaseUrl || '/api/v1')
+  : (normalizeApiBaseUrl(envBaseUrl) || '/api/v1');
 
 if (!baseURL) {
   // eslint-disable-next-line no-console
   console.error(
-    'Missing VITE_API_BASE_URL. Set it in Vercel frontend environment variables (example: https://your-backend.vercel.app/api).'
+    'Missing VITE_API_URL. Set it in frontend environment variables (example: https://your-backend.onrender.com/api/v1).'
   );
 }
 

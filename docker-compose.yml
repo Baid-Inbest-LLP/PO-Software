@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: po-mongodb
+    restart: unless-stopped
+    ports:
+      - '27018:27017'
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: po-software
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: po-server
+    restart: unless-stopped
+    ports:
+      - '5003:5003'
+    environment:
+      NODE_ENV: production
+      PORT: 5003
+      MONGODB_URI: mongodb://mongodb:27017/po-software
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_EXPIRES_IN: 7d
+      FRONTEND_URL: http://localhost:8082
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
+    depends_on:
+      - mongodb
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api/v1
+    container_name: po-client
+    restart: unless-stopped
+    ports:
+      - '8082:80'
+    depends_on:
+      - server
+
+volumes:
+  mongodb_data:
