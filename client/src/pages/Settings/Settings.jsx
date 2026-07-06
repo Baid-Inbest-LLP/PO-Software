@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { authAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../../components/common/ConfirmModal';
+import PasswordInput from '../../components/common/PasswordInput';
 import CustomSelect from '../../components/common/CustomSelect';
 import PageBanner from '../../components/common/PageBanner';
 import Skeleton, { SkeletonText } from '../../components/common/Skeleton';
@@ -413,10 +414,8 @@ const Settings = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input
-                      className="input-field"
+                    <PasswordInput
                       placeholder="At least 6 characters"
-                      type="password"
                       autoComplete="new-password"
                       {...registerCreate('password', {
                         required: 'Password is required',
@@ -751,9 +750,7 @@ const Settings = () => {
             <form onSubmit={handleSubmitPwd(onChangePassword)} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Current password</label>
-                <input
-                  type="password"
-                  className="input-field"
+                <PasswordInput
                   autoComplete="current-password"
                   {...registerPwd('currentPassword', { required: 'Current password is required' })}
                 />
@@ -763,9 +760,7 @@ const Settings = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">New password</label>
-                <input
-                  type="password"
-                  className="input-field"
+                <PasswordInput
                   autoComplete="new-password"
                   {...registerPwd('newPassword', {
                     required: 'New password is required',
@@ -778,9 +773,7 @@ const Settings = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Confirm new password</label>
-                <input
-                  type="password"
-                  className="input-field"
+                <PasswordInput
                   autoComplete="new-password"
                   {...registerPwd('confirmPassword', {
                     required: 'Please confirm your new password',

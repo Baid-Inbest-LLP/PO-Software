@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { login, clearError } from '../../features/auth/authSlice';
 import toast from 'react-hot-toast';
 import inbestLogo from '../../../assets/white_inbest_logo.png';
+import PasswordInput from '../../components/common/PasswordInput';
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -55,10 +56,9 @@ const Login = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input
-                type="password"
-                className="input-field"
+              <PasswordInput
                 placeholder="••••••••"
+                autoComplete="current-password"
                 {...register('password', { required: 'Password is required' })}
               />
               {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
