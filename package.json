@@ -9,9 +9,6 @@
     "dev:client": "pnpm --filter client dev",
     "build": "pnpm run --filter client build",
     "start": "pnpm --filter server start",
-    "seed:dummy": "pnpm --filter server seed:dummy",
-    "migrate:to-admin": "pnpm --filter server migrate:to-admin",
-    "migrate:item-departments": "pnpm --filter server migrate:item-departments",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down"
   },

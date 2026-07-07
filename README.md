@@ -171,9 +171,6 @@ See `server/src/routes/` for full route definitions.
 | `pnpm dev:server` | API with nodemon |
 | `pnpm build` | Build client for production |
 | `pnpm start` | Start production API |
-| `pnpm seed:dummy` | Seed sample data |
-| `pnpm migrate:to-admin` | Migrate data to admin user |
-| `pnpm migrate:item-departments` | Migrate item departments |
 
 ---
 

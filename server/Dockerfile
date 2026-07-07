@@ -20,8 +20,6 @@ RUN pnpm install --prod --frozen-lockfile 2>/dev/null || pnpm install --prod
 
 COPY . .
 
-RUN node scripts/generateEmbeddedAssets.js
-
 EXPOSE 5003
 
 CMD ["node", "server.js"]
