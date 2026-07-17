@@ -60,14 +60,14 @@ const roleLabel = (role) => {
 };
 
 const Sidebar = ({ isOpen = true }) => {
-  const { user } = useSelector((state) => state.auth);
+  const { user, avatarPreview } = useSelector((state) => state.auth);
+  const showPhoto = Boolean(user?.hasAvatar && avatarPreview);
 
   return (
     <aside
       className={`bg-gradient-to-br from-[#0b2f81] via-[#1446a0] to-[#1d5fb3] text-white flex flex-col h-full transition-[width] duration-300 ease-in-out will-change-[width] ${isOpen ? 'w-64' : 'w-20'
         }`}
     >
-      {/* Logo */}
       <div
         className={`flex flex-col items-center justify-center border-b border-primary-800 transition-all duration-200 ${
           isOpen ? 'px-3 py-2' : 'px-2 py-2'
@@ -77,7 +77,7 @@ const Sidebar = ({ isOpen = true }) => {
           <img
             src={isOpen ? inbestTextLogo : inbestWhiteLogo}
             alt="inbest"
-            className={`object-contain object-center transition-[height,width] duration-200 ${
+            className={`sidebar-brand-logo object-contain object-center transition-[height,width] duration-200 ${
               isOpen ? 'h-9 w-auto max-w-[9.5rem]' : 'h-9 w-auto max-w-[3.25rem]'
             }`}
             decoding="async"
@@ -85,7 +85,6 @@ const Sidebar = ({ isOpen = true }) => {
         </div>
       </div>
 
-      {/* Navigation */}
       <nav className={`flex-1 py-4 space-y-1 ${isOpen ? 'px-3' : 'px-2'}`}>
         {navItems.map((item) => (
           <NavLink
@@ -109,16 +108,19 @@ const Sidebar = ({ isOpen = true }) => {
         ))}
       </nav>
 
-      {/* User info */}
       <div className={`py-4 border-t border-primary-800 ${isOpen ? 'px-4' : 'px-2'}`}>
         <div className={`flex items-center ${isOpen ? 'gap-3' : 'justify-center'}`} title={!isOpen ? user?.name : undefined}>
-          <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-lg font-semibold">
-            {user?.name?.charAt(0).toUpperCase()}
+          <div className="sidebar-user-avatar text-lg font-semibold">
+            {showPhoto ? (
+              <img src={avatarPreview} alt={user?.name || 'Profile'} />
+            ) : (
+              user?.name?.charAt(0).toUpperCase()
+            )}
           </div>
           {isOpen && (
             <div className="flex-1 min-w-0">
               <p className="text-md font-medium text-white truncate">{user?.name}</p>
-              <p className="text-sm text-gray-400 truncate">{roleLabel(user?.role)}</p>
+              <p className="sidebar-user-role text-sm truncate">{roleLabel(user?.role)}</p>
             </div>
           )}
         </div>

@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const { sendTokenResponse } = require('../utils/helpers');
 const { processSignatureUpload, signatureBase64ToDataUri } = require('../utils/processSignatureImage');
+const { processAvatarUpload, avatarBase64ToDataUri } = require('../utils/processAvatarImage');
 
 const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
 
@@ -35,8 +36,11 @@ const toPublicUser = (user, { includeSignature = false } = {}) => {
     email: doc.email,
     role: doc.role,
     isActive: doc.isActive,
+    company: doc.company,
     createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
     hasSignature: Boolean(doc.signatureImage),
+    hasAvatar: Boolean(doc.avatarImage),
   };
   if (includeSignature && doc.signatureImage) {
     out.signaturePreview = signatureBase64ToDataUri(doc.signatureImage);
@@ -118,7 +122,7 @@ const login = async (req, res) => {
   const { password } = req.body;
   await ensureHardcodedSuperadmin();
 
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({ email }).select('+password +avatarImage');
   if (!user || !(await user.comparePassword(password))) {
     return res.status(401).json({ message: 'Invalid email or password' });
   }
@@ -133,22 +137,55 @@ const login = async (req, res) => {
 };
 
 const getMe = async (req, res) => {
-  const user = await User.findById(req.user._id)
-    .select('_id name email role isActive company createdAt updatedAt')
-    .lean();
-  res.json(user);
+  const user = await User.findById(req.user._id).select('+avatarImage');
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+  res.json(toPublicUser(user));
+};
+
+const getMyAvatar = async (req, res) => {
+  const user = await User.findById(req.user._id).select('+avatarImage');
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+  res.json({
+    hasAvatar: Boolean(user.avatarImage),
+    avatarPreview: user.avatarImage ? avatarBase64ToDataUri(user.avatarImage) : '',
+  });
 };
 
 const updateProfile = async (req, res) => {
-  const { name, company } = req.body;
+  const { name, company, avatarImage, clearAvatar } = req.body;
+  const user = await User.findById(req.user._id).select('+avatarImage');
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
 
-  const user = await User.findByIdAndUpdate(
-    req.user._id,
-    { name, company },
-    { new: true, runValidators: true }
-  );
+  const actorRole = normalizeRole(req.user.role);
+  const canEditProfileFields = actorRole === 'SUPERADMIN' || actorRole === 'PO_ADMIN';
 
-  res.json(user);
+  if (canEditProfileFields) {
+    if (name !== undefined) user.name = name;
+    if (company !== undefined) user.company = company;
+  }
+
+  if (clearAvatar) {
+    user.avatarImage = '';
+  } else if (avatarImage !== undefined) {
+    try {
+      user.avatarImage = processAvatarUpload(avatarImage);
+    } catch (err) {
+      return res.status(400).json({ message: err.message || 'Invalid photo' });
+    }
+  }
+
+  await user.save({ validateBeforeSave: false });
+
+  res.json({
+    user: toPublicUser(user),
+    avatarPreview: user.avatarImage ? avatarBase64ToDataUri(user.avatarImage) : '',
+  });
 };
 
 const changePassword = async (req, res) => {
@@ -299,6 +336,7 @@ module.exports = {
   register,
   login,
   getMe,
+  getMyAvatar,
   updateProfile,
   changePassword,
   getUsers,

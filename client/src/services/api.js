@@ -109,6 +109,7 @@ export const authAPI = {
   createUser: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
   getMe: () => cachedGet('/auth/me'),
+  getAvatar: () => api.get('/auth/me/avatar'),
   updateProfile: (data) => api.put('/auth/profile', data),
   changePassword: (data) => api.put('/auth/change-password', data),
   // Keep user list uncached so edit/delete reflects immediately.

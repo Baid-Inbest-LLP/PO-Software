@@ -23,13 +23,17 @@ const actionClassName =
 /**
  * @param {{ title: string, subtitle: string, action?: BannerAction | BannerAction[] | null, className?: string }} props
  * @typedef {{ to: string, label: string }} BannerLinkAction
- * @typedef {{ onClick: () => void, label: string, icon?: 'plus' | 'key' }} BannerButtonAction
+ * @typedef {{ onClick: () => void, label: string, icon?: 'plus' | 'key' | 'none' }} BannerButtonAction
  * @typedef {BannerLinkAction | BannerButtonAction} BannerAction
  */
 const PageBanner = ({ title, subtitle, action = null, className = '' }) => {
   const actionsList = Array.isArray(action) ? action : action ? [action] : [];
 
-  const iconFor = (act) => ('icon' in act && act.icon === 'key' ? keyIcon : plusIcon);
+  const iconFor = (act) => {
+    if ('icon' in act && (act.icon === 'none' || act.icon === false)) return null;
+    if ('icon' in act && act.icon === 'key') return keyIcon;
+    return plusIcon;
+  };
 
   const renderActions = () => {
     if (actionsList.length === 0) return null;
@@ -45,9 +49,10 @@ const PageBanner = ({ title, subtitle, action = null, className = '' }) => {
             );
           }
           if (typeof act.onClick === 'function') {
+            const icon = iconFor(act);
             return (
               <button key={`${act.label}-${idx}`} type="button" onClick={act.onClick} className={actionClassName}>
-                {iconFor(act)}
+                {icon}
                 {act.label}
               </button>
             );

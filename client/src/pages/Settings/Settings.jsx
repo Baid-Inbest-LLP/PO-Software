@@ -7,6 +7,7 @@ import ConfirmModal from '../../components/common/ConfirmModal';
 import PasswordInput from '../../components/common/PasswordInput';
 import CustomSelect from '../../components/common/CustomSelect';
 import PageBanner from '../../components/common/PageBanner';
+import ProfilePhotoModal from '../../components/common/ProfilePhotoModal';
 import Skeleton, { SkeletonText } from '../../components/common/Skeleton';
 
 const EDIT_USER_STATUS_OPTIONS = [
@@ -51,6 +52,7 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [createSignatureFile, setCreateSignatureFile] = useState(null);
@@ -299,9 +301,12 @@ const Settings = () => {
         }
         action={[
           { onClick: () => setShowPasswordModal(true), label: 'Change password', icon: 'key' },
+          { onClick: () => setShowPhotoModal(true), label: 'Upload DP', icon: 'none' },
           ...(canCreateUser ? [{ onClick: () => setShowCreate(true), label: 'Create User' }] : []),
         ]}
       />
+
+      <ProfilePhotoModal open={showPhotoModal} onClose={() => setShowPhotoModal(false)} />
 
       {canCreateUser && (
         <>

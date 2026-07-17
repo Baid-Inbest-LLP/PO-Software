@@ -50,6 +50,7 @@ const signToken = (id) => {
 
 const sendTokenResponse = (user, statusCode, res) => {
   const token = signToken(user._id);
+  const hasAvatar = Boolean(user.avatarImage);
 
   res.status(statusCode).json({
     token,
@@ -59,6 +60,7 @@ const sendTokenResponse = (user, statusCode, res) => {
       email: user.email,
       role: user.role,
       company: user.company,
+      hasAvatar,
     },
   });
 };

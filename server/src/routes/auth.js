@@ -4,6 +4,7 @@ const {
   register,
   login,
   getMe,
+  getMyAvatar,
   updateProfile,
   changePassword,
   getUsers,
@@ -51,7 +52,8 @@ router.post(
 );
 
 router.get('/me', protect, getMe);
-router.put('/profile', protect, authorize('SUPERADMIN', 'PO_ADMIN'), updateProfile);
+router.get('/me/avatar', protect, getMyAvatar);
+router.put('/profile', protect, updateProfile);
 router.put('/change-password', protect, changePassword);
 
 router.get('/users', protect, authorize('SUPERADMIN', 'PO_ADMIN'), getUsers);

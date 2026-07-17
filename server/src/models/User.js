@@ -32,6 +32,12 @@ const userSchema = new mongoose.Schema(
       default: '',
       select: false,
     },
+    /** Profile photo (base64) shown in the sidebar. */
+    avatarImage: {
+      type: String,
+      default: '',
+      select: false,
+    },
     company: {
       name: { type: String, default: '' },
       address: { type: String, default: '' },
