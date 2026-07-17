@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useSelector } from 'react-redux';
+
+const getPortalRoot = () => document.getElementById('root') || document.body;
 
 const CustomSelect = ({
   options = [],
@@ -20,6 +23,8 @@ const CustomSelect = ({
   const searchRef = useRef(null);
   const listRef = useRef(null);
   const [pos, setPos] = useState({ top: 0, left: 0, width: 0, placement: 'bottom' });
+  const theme = useSelector((state) => state.ui.theme);
+  const prevThemeRef = useRef(theme);
 
   const selected = options.find((o) => !o.isGroupHeader && String(o.value) === String(value));
 
@@ -45,10 +50,15 @@ const CustomSelect = ({
     const viewportH = window.innerHeight || document.documentElement.clientHeight;
     const dropdownMaxH = 280;
     const spaceBelow = viewportH - r.bottom;
-    const placeBottom = spaceBelow >= 220; // enough room for most lists/search
+    const placeBottom = spaceBelow >= 220;
     const placement = placeBottom ? 'bottom' : 'top';
     const top = placement === 'bottom' ? r.bottom + 6 : Math.max(8, r.top - 6 - dropdownMaxH);
-    setPos({ top, left: r.left, width: r.width, placement });
+    setPos({
+      top: Math.round(top),
+      left: Math.round(r.left),
+      width: Math.round(r.width),
+      placement,
+    });
   }, []);
 
   useEffect(() => {
@@ -61,6 +71,13 @@ const CustomSelect = ({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open, close]);
+
+  useEffect(() => {
+    if (prevThemeRef.current !== theme) {
+      prevThemeRef.current = theme;
+      close();
+    }
+  }, [theme, close]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -112,25 +129,19 @@ const CustomSelect = ({
     lg: 'py-2.5 px-3 text-base',
   };
 
+  const isInactive = disabled || loading;
+
   return (
     <div ref={ref} className={`relative ${className}`}>
-      {/* Trigger */}
       <button
         type="button"
-        onClick={() => !disabled && !loading && setOpen(!open)}
-        disabled={disabled || loading}
+        onClick={() => !isInactive && setOpen(!open)}
+        disabled={isInactive}
         ref={triggerRef}
-        className={`w-full flex items-center justify-between gap-2 rounded-lg border bg-white transition-all duration-150 ${
+        data-open={open || undefined}
+        className={`po-custom-select-trigger w-full flex items-center justify-between gap-2 rounded-lg border ${
           sizeClasses[size] || sizeClasses.md
-        } ${
-          open
-            ? 'border-primary-400 ring-2 ring-primary-100 shadow-sm'
-            : error
-              ? 'border-red-400 hover:border-red-500'
-              : 'border-gray-300 hover:border-gray-400'
-        } ${
-          disabled || loading ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : 'cursor-pointer'
-        }`}
+        } ${isInactive ? 'is-disabled' : ''} ${error ? 'has-error' : ''}`}
       >
         {loading ? (
           <span className="flex items-center gap-2 text-gray-400">
@@ -141,7 +152,7 @@ const CustomSelect = ({
             Loading...
           </span>
         ) : (
-          <span className={`truncate ${selected ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
+          <span className={`po-custom-select-value truncate ${selected ? 'is-selected' : ''}`}>
             {selected ? selected.label : placeholder}
           </span>
         )}
@@ -156,12 +167,11 @@ const CustomSelect = ({
         </svg>
       </button>
 
-      {/* Dropdown */}
       {open &&
         createPortal(
           <div
             ref={dropdownRef}
-            className="fixed z-[80] bg-white border border-gray-200 rounded-xl shadow-xl shadow-gray-200/60 overflow-hidden animate-in fade-in"
+            className="po-custom-select-menu overflow-hidden"
             style={{
               top: pos.top,
               left: pos.left,
@@ -169,9 +179,8 @@ const CustomSelect = ({
               maxHeight: 280,
             }}
           >
-            {/* Search */}
             {showSearch && (
-              <div className="p-2 border-b border-gray-100">
+              <div className="po-custom-select-search-wrap p-2">
                 <div className="relative">
                   <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -179,7 +188,7 @@ const CustomSelect = ({
                   <input
                     ref={searchRef}
                     type="text"
-                    className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-100 transition-all"
+                    className="po-custom-select-search w-full pl-8 pr-3 py-1.5 text-sm rounded-lg focus:outline-none"
                     placeholder="Search..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -189,7 +198,6 @@ const CustomSelect = ({
               </div>
             )}
 
-            {/* Options list */}
             <div ref={listRef} className="overflow-y-auto" style={{ maxHeight: showSearch ? '220px' : '260px' }}>
               {filtered.length === 0 ? (
                 <div className="px-4 py-6 text-center text-sm text-gray-400">
@@ -201,7 +209,7 @@ const CustomSelect = ({
                     return (
                       <div
                         key={opt.value}
-                        className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 border-b border-gray-100 select-none"
+                        className="po-custom-select-group px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest select-none"
                       >
                         {opt.label}
                       </div>
@@ -214,13 +222,11 @@ const CustomSelect = ({
                       type="button"
                       data-active={isActive}
                       onClick={() => handleSelect(opt)}
-                      className={`w-full flex items-center px-3 py-2 text-sm text-left transition-colors ${
-                        isActive
-                          ? 'bg-primary-50 text-primary-700 font-medium'
-                          : 'text-gray-700 hover:bg-gray-50'
+                      className={`po-custom-select-option w-full flex items-center gap-2 px-3 py-2 text-sm text-left ${
+                        isActive ? 'is-active' : ''
                       }`}
                     >
-                      <div className="min-w-0 flex items-center gap-2">
+                      <div className="min-w-0 flex-1 flex items-center gap-2">
                         <span className="truncate">{opt.label}</span>
                         {opt.badge && (
                           <span
@@ -243,7 +249,7 @@ const CustomSelect = ({
               )}
             </div>
           </div>,
-          document.body
+          getPortalRoot()
         )}
     </div>
   );

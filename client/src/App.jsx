@@ -8,10 +8,8 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const PurchaseOrderList = lazy(() => import('./pages/PurchaseOrders/PurchaseOrderList'));
 const CreatePurchaseOrder = lazy(() => import('./pages/PurchaseOrders/CreatePurchaseOrder'));
 const PurchaseOrderDetail = lazy(() => import('./pages/PurchaseOrders/PurchaseOrderDetail'));
-const CompanyList = lazy(() => import('./pages/Companies/CompanyList'));
-const VendorList = lazy(() => import('./pages/Vendors/VendorList'));
-const ItemList = lazy(() => import('./pages/Items/ItemList'));
 const Settings = lazy(() => import('./pages/Settings/Settings'));
+const ControlCenterPage = lazy(() => import('./pages/control-center/ControlCenterPage'));
 
 const LayoutWrapper = () => (
   <Layout>
@@ -82,29 +80,16 @@ const App = () => {
               )}
             />
             <Route
-              path="/companies"
+              path="/control-center/*"
               element={(
                 <Suspense fallback={null}>
-                  <CompanyList />
+                  <ControlCenterPage />
                 </Suspense>
               )}
             />
-            <Route
-              path="/vendors"
-              element={(
-                <Suspense fallback={null}>
-                  <VendorList />
-                </Suspense>
-              )}
-            />
-            <Route
-              path="/items"
-              element={(
-                <Suspense fallback={null}>
-                  <ItemList />
-                </Suspense>
-              )}
-            />
+            <Route path="/companies" element={<Navigate to="/control-center/companies" replace />} />
+            <Route path="/vendors" element={<Navigate to="/control-center/vendors" replace />} />
+            <Route path="/items" element={<Navigate to="/control-center/items" replace />} />
             <Route
               path="/settings"
               element={(

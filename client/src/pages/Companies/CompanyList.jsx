@@ -4,10 +4,11 @@ import { fetchCompanies, deleteCompany } from '../../features/companies/companie
 import CompanyForm from './CompanyForm';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import PageBanner from '../../components/common/PageBanner';
+import ControlCenterToolbar from '../control-center/ControlCenterToolbar';
 import toast from 'react-hot-toast';
 import Skeleton, { SkeletonText } from '../../components/common/Skeleton';
 
-const CompanyList = () => {
+const CompanyList = ({ embedded = false }) => {
   const dispatch = useDispatch();
   const { companies, total, loading } = useSelector((state) => state.companies);
   const { user } = useSelector((state) => state.auth);
@@ -45,23 +46,39 @@ const CompanyList = () => {
     dispatch(fetchCompanies({ search }));
   };
 
+  const subtitle = `Legal entities and Shipping Locations · ${total} Compan${total !== 1 ? 'ies' : 'y'}`;
+
   return (
     <div>
-      <PageBanner
-        className="mb-4"
-        title="Companies"
-        subtitle={`Legal entities and Shipping Locations · ${total} Compan${total !== 1 ? 'ies' : 'y'}`}
-        action={{ onClick: () => setShowForm(true), label: 'Add Company' }}
-      />
-
-      <div className="card p-4 mb-4">
-        <input
-          className="input-field max-w-sm"
-          placeholder="Search companies..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+      {!embedded && (
+        <PageBanner
+          className="mb-4"
+          title="Companies"
+          subtitle={subtitle}
+          action={{ onClick: () => setShowForm(true), label: 'Add Company' }}
         />
-      </div>
+      )}
+
+      {embedded ? (
+        <ControlCenterToolbar
+          title="Companies"
+          subtitle={subtitle}
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search companies..."
+          actionLabel="Add Company"
+          onAction={() => setShowForm(true)}
+        />
+      ) : (
+        <div className="card p-4 mb-4">
+          <input
+            className="input-field max-w-sm"
+            placeholder="Search companies..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-4">

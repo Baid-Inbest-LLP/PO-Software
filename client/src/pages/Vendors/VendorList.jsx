@@ -5,10 +5,11 @@ import VendorForm from './VendorForm';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import Pagination, { TABLE_PAGE_SIZE } from '../../components/common/Pagination';
 import PageBanner from '../../components/common/PageBanner';
+import ControlCenterToolbar from '../control-center/ControlCenterToolbar';
 import toast from 'react-hot-toast';
 import Skeleton, { SkeletonText } from '../../components/common/Skeleton';
 
-const VendorList = () => {
+const VendorList = ({ embedded = false }) => {
   const dispatch = useDispatch();
   const { vendors, total, pages, loading } = useSelector((state) => state.vendors);
   const { user } = useSelector((state) => state.auth);
@@ -48,26 +49,45 @@ const VendorList = () => {
     dispatch(fetchVendors({ search, page, limit: TABLE_PAGE_SIZE }));
   };
 
+  const subtitle = `Manage supplier contacts and billing details · ${total} Vendor${total !== 1 ? 's' : ''}`;
+
   return (
     <div>
-      <PageBanner
-        className="mb-4"
-        title="Vendors"
-        subtitle={`Manage supplier contacts and billing details · ${total} Vendor${total !== 1 ? 's' : ''}`}
-        action={{ onClick: () => setShowForm(true), label: 'Add Vendor' }}
-      />
+      {!embedded && (
+        <PageBanner
+          className="mb-4"
+          title="Vendors"
+          subtitle={subtitle}
+          action={{ onClick: () => setShowForm(true), label: 'Add Vendor' }}
+        />
+      )}
 
-      <div className="card p-4 mb-4">
-        <input
-          className="input-field max-w-sm"
-          placeholder="Search vendors..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
+      {embedded ? (
+        <ControlCenterToolbar
+          title="Vendors"
+          subtitle={subtitle}
+          search={search}
+          onSearchChange={(val) => {
+            setSearch(val);
             setPage(1);
           }}
+          searchPlaceholder="Search vendors..."
+          actionLabel="Add Vendor"
+          onAction={() => setShowForm(true)}
         />
-      </div>
+      ) : (
+        <div className="card p-4 mb-4">
+          <input
+            className="input-field max-w-sm"
+            placeholder="Search vendors..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+          />
+        </div>
+      )}
 
       <div className="card">
         {loading ? (

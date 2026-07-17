@@ -1,14 +1,21 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../../features/auth/authSlice';
+import { setTheme } from '../../features/ui/uiSlice';
 import toast from 'react-hot-toast';
 import ConfirmModal from './ConfirmModal';
 
 const Navbar = ({ sidebarOpen, onToggleSidebar }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const theme = useSelector((state) => state.ui.theme);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    dispatch(setTheme(next));
+  };
 
   const handleLogoutConfirm = () => {
     dispatch(logout());
@@ -18,12 +25,12 @@ const Navbar = ({ sidebarOpen, onToggleSidebar }) => {
   };
 
   return (
-    <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+    <header className="app-navbar h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6">
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="p-2 rounded-md text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          className="navbar-toggle p-2 rounded-md text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
           aria-label={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
           title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
         >
@@ -32,7 +39,32 @@ const Navbar = ({ sidebarOpen, onToggleSidebar }) => {
           </svg>
         </button>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="navbar-theme p-2 rounded-md text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+          title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+        >
+          {theme === 'dark' ? (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+              />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+              />
+            </svg>
+          )}
+        </button>
         <button
           type="button"
           onClick={() => setShowLogoutConfirm(true)}

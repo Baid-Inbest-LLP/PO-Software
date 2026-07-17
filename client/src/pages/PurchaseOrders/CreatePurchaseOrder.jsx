@@ -34,6 +34,39 @@ const emptyLineItem = () => ({
   totalPrice: 0,
 });
 
+const emptyForm = () => ({
+  company: '',
+  shippingLocationId: '',
+  vendor: '',
+  vendorLocationId: '',
+  vendorAddress: {
+    label: '',
+    street: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: '',
+  },
+  orderDate: new Date().toISOString().split('T')[0],
+  expectedDeliveryDate: '',
+  shippingAddress: {
+    label: '',
+    company: '',
+    street: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: '',
+  },
+  lineItems: [emptyLineItem()],
+  taxRate: 0,
+  shippingCost: '',
+  discountAmount: 0,
+  notes: '',
+  terms: '',
+  status: 'pending',
+});
+
 const titleCaseWords = (s) =>
   String(s)
     .trim()
@@ -114,38 +147,7 @@ const CreatePurchaseOrder = () => {
   const { companies, loading: companiesLoading } = useSelector((state) => state.companies);
   const { currentOrder, loading } = useSelector((state) => state.purchaseOrders);
 
-  const [form, setForm] = useState({
-    company: '',
-    shippingLocationId: '',
-    vendor: '',
-    vendorLocationId: '',
-    vendorAddress: {
-      label: '',
-      street: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: '',
-    },
-    orderDate: new Date().toISOString().split('T')[0],
-    expectedDeliveryDate: '',
-    shippingAddress: {
-      label: '',
-      company: '',
-      street: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: '',
-    },
-    lineItems: [emptyLineItem()],
-    taxRate: 0,
-    shippingCost: '',
-    discountAmount: 0,
-    notes: '',
-    terms: '',
-    status: 'pending',
-  });
+  const [form, setForm] = useState(emptyForm);
 
   const [submitting, setSubmitting] = useState(false);
   const [vendorOptions, setVendorOptions] = useState([]);
@@ -423,6 +425,12 @@ const CreatePurchaseOrder = () => {
     setForm((p) => ({ ...p, lineItems: p.lineItems.filter((_, i) => i !== idx) }));
   };
 
+  const handleReset = () => {
+    setForm(emptyForm());
+    setSelectedDepartment('');
+    toast.success('Form cleared');
+  };
+
   const handleSubmit = async () => {
     if (!form.company) return toast.error('Please select a company');
     if (!form.shippingLocationId) return toast.error('Please select a shipping location');
@@ -492,7 +500,7 @@ const CreatePurchaseOrder = () => {
             />
             {!companiesLoading && companies.length === 0 && (
               <p className="text-xs text-amber-600 mt-1">
-                No companies found. <a href="/companies" className="underline font-medium">Add a company first.</a>
+                No companies found. <a href="/control-center/companies" className="underline font-medium">Add a company first.</a>
               </p>
             )}
           </div>
@@ -609,7 +617,7 @@ const CreatePurchaseOrder = () => {
               <input
                 ref={orderDateRef}
                 type="date"
-                className="w-full h-11 pl-3 pr-10 rounded-xl border border-gray-300 bg-gradient-to-b from-white to-gray-50 text-[15px] font-semibold text-gray-800 outline-none transition-all focus:border-primary-500 focus:ring-4 focus:ring-primary-100 hover:border-gray-400 cursor-pointer"
+                className="po-date-input focus:border-primary-500 focus:ring-4 focus:ring-primary-100 hover:border-gray-400"
                 value={form.orderDate}
                 onChange={(e) => setForm((p) => ({ ...p, orderDate: e.target.value }))}
                 onClick={() => openNativeDatePicker(orderDateRef)}
@@ -638,7 +646,7 @@ const CreatePurchaseOrder = () => {
               <input
                 ref={deliveryDateRef}
                 type="date"
-                className="w-full h-11 pl-3 pr-10 rounded-xl border border-gray-300 bg-gradient-to-b from-white to-gray-50 text-[15px] font-semibold text-gray-800 outline-none transition-all focus:border-primary-500 focus:ring-4 focus:ring-primary-100 hover:border-gray-400 cursor-pointer"
+                className="po-date-input focus:border-primary-500 focus:ring-4 focus:ring-primary-100 hover:border-gray-400"
                 value={form.expectedDeliveryDate}
                 onChange={(e) => setForm((p) => ({ ...p, expectedDeliveryDate: e.target.value }))}
                 onClick={() => openNativeDatePicker(deliveryDateRef)}
@@ -873,12 +881,37 @@ const CreatePurchaseOrder = () => {
             </div>
           </div>
 
-          <div className="mt-6 flex flex-col gap-2">
+          <div className="mt-6 flex items-stretch gap-2">
+            {!isEdit && (
+              <button
+                type="button"
+                onClick={() => handleReset()}
+                disabled={submitting}
+                title="Reset form"
+                aria-label="Reset form"
+                className="btn-secondary flex-shrink-0 flex items-center justify-center min-h-[3.25rem] w-[3.25rem] rounded-xl"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  aria-hidden
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => handleSubmit()}
               disabled={submitting}
-              className="btn-primary justify-center w-full py-4 px-6 min-h-[3.25rem] text-base sm:text-xl font-semibold rounded-xl shadow-md hover:shadow-lg"
+              className="btn-primary flex-1 justify-center py-4 px-6 min-h-[3.25rem] text-base sm:text-xl font-semibold rounded-xl shadow-md hover:shadow-lg"
             >
               {submitting ? 'Saving...' : isEdit ? 'Save changes' : 'Submit PO'}
             </button>

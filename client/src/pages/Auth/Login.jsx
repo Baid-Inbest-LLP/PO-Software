@@ -89,10 +89,6 @@ const Login = () => {
               ) : 'Sign In'}
             </button>
           </form>
-
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Contact Superadmin to create a new account.
-          </p>
         </div>
       </div>
     </div>

@@ -19,6 +19,8 @@ import {
 import ConfirmModal from '../../components/common/ConfirmModal';
 import Skeleton, { SkeletonText } from '../../components/common/Skeleton';
 import toast from 'react-hot-toast';
+import excelIcon from '../../../assets/excel.svg';
+import pdfIcon from '../../../assets/pdf.svg';
 
 const PurchaseOrderDetail = () => {
   const { id } = useParams();
@@ -214,7 +216,7 @@ const PurchaseOrderDetail = () => {
         <svg className="w-4 h-4 transition-transform duration-150 group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Back to Purchase Orders
+        Back to Purchase Order
       </button>
 
       {/* ── Hero Card — PO info + dates + actions ── */}
@@ -309,11 +311,11 @@ const PurchaseOrderDetail = () => {
               {canDownload && (
                 <>
                   <button onClick={() => handleDownload('pdf')} disabled={downloading === 'pdf'} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <img src={pdfIcon} alt="PDF" className="w-4 h-4" />
                     {downloading === 'pdf' ? 'Downloading...' : 'Download PDF'}
                   </button>
                   <button onClick={() => handleDownload('excel')} disabled={downloading === 'excel'} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors disabled:opacity-50">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <img src={excelIcon} alt="Excel" className="w-4 h-4" />
                     {downloading === 'excel' ? 'Downloading...' : 'Download Excel'}
                   </button>
                 </>

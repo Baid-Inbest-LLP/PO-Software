@@ -18,7 +18,7 @@ const keyIcon = (
 );
 
 const actionClassName =
-  'inline-flex items-center gap-2 px-5 py-2.5 bg-white text-primary-800 rounded-xl text-sm font-bold hover:bg-primary-50 active:scale-95 transition-all duration-150 shadow-lg shadow-primary-900/30 flex-shrink-0';
+  'inline-flex items-center gap-2 px-5 py-2.5 bg-white text-primary-800 rounded-xl text-sm font-bold shadow-lg shadow-primary-900/30 flex-shrink-0';
 
 /**
  * @param {{ title: string, subtitle: string, action?: BannerAction | BannerAction[] | null, className?: string }} props

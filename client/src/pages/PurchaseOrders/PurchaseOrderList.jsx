@@ -9,6 +9,8 @@ import Pagination, { TABLE_PAGE_SIZE } from '../../components/common/Pagination'
 import PageBanner from '../../components/common/PageBanner';
 import Skeleton, { SkeletonText } from '../../components/common/Skeleton';
 import toast from 'react-hot-toast';
+import excelIcon from '../../../assets/excel.svg';
+import pdfIcon from '../../../assets/pdf.svg';
 
 const PurchaseOrderList = () => {
   const dispatch = useDispatch();
@@ -54,13 +56,13 @@ const PurchaseOrderList = () => {
     <div>
       <PageBanner
         className="mb-4"
-        title="Purchase Orders"
-        subtitle={`Total Purchase Orders · ${total}`}
+        title="Purchase Order"
+        subtitle={`Total · ${total}`}
         action={{ to: '/purchase-orders/new', label: 'New PO' }}
       />
 
       {/* Filters */}
-      <div className="card p-4 mb-4 flex flex-wrap gap-3">
+      <div className="card p-4 mb-4 flex flex-wrap items-center gap-3">
         <div className="flex-1 min-w-48">
           <input
             className="input-field"
@@ -182,32 +184,28 @@ const PurchaseOrderList = () => {
                         <button
                           onClick={() => ['approved_by_admin', 'completed'].includes(order.status) && handleDownload(order._id, order.poNumber, 'pdf')}
                           disabled={!['approved_by_admin', 'completed'].includes(order.status) || downloading === `${order._id}-pdf`}
-                          className={`p-1.5 rounded transition-colors ${
+                          className={`p-1.5 rounded ${
                             ['approved_by_admin', 'completed'].includes(order.status)
-                              ? 'text-red-500 hover:text-red-700'
-                              : 'text-gray-300 cursor-not-allowed'
+                              ? ''
+                              : 'opacity-40 grayscale cursor-not-allowed'
                           }`}
                           title={['approved_by_admin', 'completed'].includes(order.status) ? 'Download PDF' : 'PDF available when status is Approved or completed'}
                         >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
+                          <img src={pdfIcon} alt="PDF" className="w-4 h-4" />
                         </button>
 
                         {/* Excel — enabled after admin approval */}
                         <button
                           onClick={() => ['approved_by_admin', 'completed'].includes(order.status) && handleDownload(order._id, order.poNumber, 'excel')}
                           disabled={!['approved_by_admin', 'completed'].includes(order.status) || downloading === `${order._id}-excel`}
-                          className={`p-1.5 rounded transition-colors ${
+                          className={`p-1.5 rounded ${
                             ['approved_by_admin', 'completed'].includes(order.status)
-                              ? 'text-green-500 hover:text-green-700'
-                              : 'text-gray-300 cursor-not-allowed'
+                              ? ''
+                              : 'opacity-40 grayscale cursor-not-allowed'
                           }`}
                           title={['approved_by_admin', 'completed'].includes(order.status) ? 'Download Excel' : 'Excel available when status is Approved or completed'}
                         >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
+                          <img src={excelIcon} alt="Excel" className="w-4 h-4" />
                         </button>
                       </div>
                     </td>

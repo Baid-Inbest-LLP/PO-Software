@@ -13,12 +13,13 @@ import ConfirmModal from '../../components/common/ConfirmModal';
 import CustomSelect from '../../components/common/CustomSelect';
 import Pagination, { TABLE_PAGE_SIZE } from '../../components/common/Pagination';
 import PageBanner from '../../components/common/PageBanner';
+import ControlCenterToolbar from '../control-center/ControlCenterToolbar';
 import toast from 'react-hot-toast';
 import Skeleton, { SkeletonText } from '../../components/common/Skeleton';
 
 const ALL_TAB = 'All';
 
-const ItemList = () => {
+const ItemList = ({ embedded = false }) => {
   const dispatch = useDispatch();
   const { items, total, pages, loading } = useSelector((state) => state.items);
   const { user } = useSelector((state) => state.auth);
@@ -92,25 +93,44 @@ const ItemList = () => {
 
   return (
     <div>
-      <PageBanner
-        className="mb-4"
-        title="Items & Products"
-        subtitle={subtitle}
-        action={{ onClick: () => setShowForm(true), label: 'Add Item' }}
-      />
+      {!embedded && (
+        <PageBanner
+          className="mb-4"
+          title="Items & Products"
+          subtitle={subtitle}
+          action={{ onClick: () => setShowForm(true), label: 'Add Item' }}
+        />
+      )}
 
-      <div className="card p-4 mb-4 flex flex-wrap gap-3">
-        <div className="flex-1 min-w-48">
-          <input
-            className="input-field"
-            placeholder="Search items by name..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-          />
-        </div>
+      {embedded && (
+        <ControlCenterToolbar
+          title="Items & Products"
+          subtitle={subtitle}
+          search={search}
+          onSearchChange={(val) => {
+            setSearch(val);
+            setPage(1);
+          }}
+          searchPlaceholder="Search items by name..."
+          actionLabel="Add Item"
+          onAction={() => setShowForm(true)}
+        />
+      )}
+
+      <div className="card p-4 mb-4 flex flex-wrap items-center gap-3">
+        {!embedded && (
+          <div className="flex-1 min-w-48">
+            <input
+              className="input-field"
+              placeholder="Search items by name..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+        )}
         <CustomSelect
           className="w-56"
           placeholder="All Departments"
