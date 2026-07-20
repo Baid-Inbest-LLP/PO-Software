@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Component, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +6,24 @@ import { login, clearError } from '../../features/auth/authSlice';
 import toast from 'react-hot-toast';
 import inbestLogo from '../../../assets/white_inbest_logo.png';
 import PasswordInput from '../../components/common/PasswordInput';
+import Ballpit from '../../components/effects/Ballpit';
+
+class BallpitBoundary extends Component {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error) {
+    console.warn('[Ballpit] render error:', error);
+  }
+
+  render() {
+    if (this.state.failed) return null;
+    return this.props.children;
+  }
+}
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -27,27 +45,57 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0b2f81] via-[#1446a0] to-[#1d5fb3] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-4">
-          <div className="inline-flex items-center justify-center mb-4">
-            <img src={inbestLogo} alt="Inbest Logo" className="w-25 h-25 object-contain" />
-          </div>
-          {/* <h1 className="text-2xl font-bold text-white">PO SYSTEM</h1> */}
-          <p className="text-gray-400 text-lg mt-1">Purchase Order Management System</p>
-        </div>
+    <div className="login-page min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="login-page__bg" aria-hidden="true">
+        <BallpitBoundary>
+          <Ballpit
+            className="ballpit-bg"
+            count={60}
+            gravity={0.7}
+            friction={0.8}
+            wallBounce={0.95}
+            followCursor
+            colors={[0x9ec5ff, 0x4d8ef0, 0xffffff, 0x7eb6ff]}
+            ambientColor={0xffffff}
+            ambientIntensity={1.1}
+            lightIntensity={110}
+            minSize={0.65}
+            maxSize={1.35}
+            materialParams={{
+              metalness: 0.08,
+              roughness: 0.28,
+              clearcoat: 0.5,
+              clearcoatRoughness: 0.25,
+              emissive: 0x143a6e,
+              emissiveIntensity: 0.25
+            }}
+          />
+        </BallpitBoundary>
+      </div>
 
+      <div className="login-page__overlay" aria-hidden="true" />
+
+      <div className="login-page__content w-full max-w-md">
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6 text-center">Sign In</h2>
+        <div className="bg-transparent border-2 border-white/20 backdrop-blur-[13px] px-6 py-8 rounded-xl shadow-[0_0_10px_rgba(0,0,0,0.1)]">
+          {/* Logo */}
+          <div className="text-center mb-4">
+            <div className="inline-flex items-center justify-center mb-4">
+              <img src={inbestLogo} alt="Inbest Logo" className="w-25 h-25 object-contain" />
+            </div>
+            {/* <h1 className="text-2xl font-bold text-white">PO SYSTEM</h1> */}
+            <p className="text-white/90 text-lg mt-1">Purchase Order Management System</p>
+          </div>
+
+
+          <h2 className="text-2xl font-bold text-white mb-6 text-center">Sign In</h2>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-white/90 mb-1">Email</label>
               <input
                 type="email"
-                className="input-field"
+                className="login-input"
                 placeholder="you@company.com"
                 {...register('email', { required: 'Email is required' })}
               />
@@ -55,8 +103,10 @@ const Login = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label className="block text-sm font-medium text-white/90 mb-1">Password</label>
               <PasswordInput
+                className="login-input login-input--with-toggle"
+                toggleClassName="text-white hover:text-white focus:ring-white/40"
                 placeholder="••••••••"
                 autoComplete="current-password"
                 {...register('password', { required: 'Password is required' })}
@@ -76,7 +126,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full justify-center py-2.5 mt-2 inline-flex items-center rounded-lg px-4 text-sm font-semibold text-white bg-[#0b2f81] hover:bg-[#1446a0] active:bg-[#08306b] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              className="login-submit-btn"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
