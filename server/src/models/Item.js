@@ -33,6 +33,16 @@ const DEPARTMENT_CATEGORIES = {
     'Condiments & Food Items',
     'Kitchenware & Utensils',
   ],
+  OTHER: [
+    'General Supplies',
+    'Services & Professional Fees',
+    'Travel & Conveyance',
+    'Packaging & Shipping',
+    'Safety & Security',
+    'Events & Hospitality',
+    'Gifts & Miscellaneous',
+    'Other',
+  ],
 };
 
 const DEPARTMENTS = Object.keys(DEPARTMENT_CATEGORIES);

@@ -512,7 +512,7 @@ const Settings = () => {
                           <td className="text-left font-semibold text-gray-800">{u.name}</td>
                           <td className="text-center text-gray-600">{u.email}</td>
                           <td className="text-center">
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded border border-gray-200 bg-gray-50">
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 role-pill">
                               {roleLabel(u.role)}
                             </span>
                             {(u.role === 'PO_ADMIN' || u.role === 'ADMIN') && (
@@ -524,7 +524,9 @@ const Settings = () => {
                           <td className="text-center">
                             <span
                               className={`badge ${
-                                u.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                                u.isActive
+                                  ? 'status-pill-active bg-green-100 text-green-700'
+                                  : 'status-pill-inactive bg-gray-100 text-gray-500'
                               }`}
                             >
                               {u.isActive ? 'Active' : 'Inactive'}

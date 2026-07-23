@@ -180,7 +180,7 @@ const CompanyList = ({ embedded = false }) => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`badge ${company.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                  <span className={`badge ${company.isActive ? 'status-pill-active bg-green-100 text-green-700' : 'status-pill-inactive bg-gray-100 text-gray-500'}`}>
                     {company.isActive ? 'Active' : 'Inactive'}
                   </span>
                   <button

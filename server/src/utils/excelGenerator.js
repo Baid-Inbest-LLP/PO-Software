@@ -2,6 +2,14 @@ const ExcelJS = require('exceljs');
 const { amountToWordsINR } = require('./amountToWords');
 const { joinVendorShipFromAddress, joinPoVendorShipFrom } = require('./vendorShipFrom');
 const { readAssetBuffer } = require('./assetLoader');
+const {
+  calcAmount,
+  calcDiscountAmt,
+  calcGstAmt,
+  calcLineTotal,
+  summarizePoAmounts,
+  toPaise,
+} = require('./poAmounts');
 
 const fmtDateDMY = (d) => {
   if (!d) return '';
@@ -204,14 +212,12 @@ const generatePOExcel = async (po, { adminSignatureBuffer, mdSignatureBuffer } =
   let gstTotalRaw = 0;
   const shippingCostRounded = Math.round(num(po.shippingCost));
   (po.lineItems || []).forEach((li, idx) => {
-    const base = num(li.quantity) * num(li.unitPrice);
     const discountPct = num(li.discount);
     const gstPct = num(li.gstRate);
-    const discAmtRaw = base * (discountPct / 100);
-    const amountRaw = base - discAmtRaw;
-    const gstRaw = num(li.gstAmount) || (amountRaw * (gstPct / 100));
-    const totalRaw = num(li.totalPrice) || (amountRaw + gstRaw);
-    const roundedTotal = Math.round(totalRaw);
+    const discAmtRaw = calcDiscountAmt(li);
+    const amountRaw = calcAmount(li);
+    const gstRaw = calcGstAmt(li);
+    const roundedTotal = calcLineTotal(li);
     qtyTotal += num(li.quantity);
     discountTotalRaw += discAmtRaw;
     amountTotalRaw += amountRaw;
@@ -222,17 +228,17 @@ const generatePOExcel = async (po, { adminSignatureBuffer, mdSignatureBuffer } =
       li.description || li.item?.name || '',
       num(li.quantity),
       li.unit || li.item?.unit || 'pcs',
-      num(li.unitPrice),
+      toPaise(num(li.unitPrice)),
       discountPct > 0 ? discountPct : '',
-      Math.round(discAmtRaw),
-      Math.round(amountRaw),
+      discAmtRaw > 0 ? discAmtRaw : '',
+      amountRaw,
       gstPct > 0 ? gstPct : '',
-      Math.round(gstRaw),
+      gstRaw > 0 ? gstRaw : '',
       roundedTotal,
     ];
     vals.forEach((v, i) => {
       const c = ws.getCell(r, i + 2);
-      c.value = v;
+      c.value = v === '' ? '' : v;
       c.font = {
         name: 'Calibri',
         size: 14,
@@ -241,13 +247,15 @@ const generatePOExcel = async (po, { adminSignatureBuffer, mdSignatureBuffer } =
         ...(i === 10 ? { bold: true } : {}),
       };
       c.alignment = { horizontal: [0, 2, 3].includes(i) ? 'center' : i >= 4 ? 'right' : 'left', vertical: 'middle', wrapText: i === 1 };
-      if ([4, 6, 7, 9, 10].includes(i)) c.numFmt = INR_FMT;
+      if ([4, 6, 7, 9].includes(i)) c.numFmt = '"₹" #,##0.00';
+      if (i === 10) c.numFmt = INR_FMT;
       border(c);
     });
     ws.getRow(r).height = 24;
     r += 1;
   });
 
+  const summary = summarizePoAmounts(po.lineItems || [], po.shippingCost);
   const totalsVals = [
     '',
     'Totals',
@@ -255,11 +263,11 @@ const generatePOExcel = async (po, { adminSignatureBuffer, mdSignatureBuffer } =
     '',
     '',
     '',
-    Math.round(discountTotalRaw),
-    Math.round(amountTotalRaw),
+    summary.discountRounded > 0 ? summary.discountRounded : '',
+    summary.subtotal,
     '',
-    Math.round(gstTotalRaw),
-    itemsTotalRounded,
+    summary.gstTotal > 0 ? summary.gstTotal : '',
+    summary.itemsTotal,
   ];
   totalsVals.forEach((v, i) => {
     const c = ws.getCell(r, i + 2);
@@ -288,7 +296,7 @@ const generatePOExcel = async (po, { adminSignatureBuffer, mdSignatureBuffer } =
     r += 1;
   }
 
-  const grandTotalRounded = Math.round(itemsTotalRounded + num(po.shippingCost));
+  const grandTotalRounded = summary.grandTotal;
   ws.mergeCells(`B${r}:K${r}`); const g1 = ws.getCell(`B${r}`); g1.value = 'TOTAL AMOUNT'; g1.font = { name: 'Calibri', size: 20, bold: true, color: { argb: 'FFFFFFFF' } }; g1.alignment = { horizontal: 'center', vertical: 'middle' }; g1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF005887' } }; border(g1);
   const g2 = ws.getCell(`L${r}`); g2.value = grandTotalRounded; g2.numFmt = INR_FMT; g2.font = { name: 'Calibri', size: 20, bold: true, color: { argb: 'FFFFFFFF' } }; g2.alignment = { horizontal: 'right', vertical: 'middle' }; g2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF005887' } }; border(g2);
   ws.getRow(r).height = 26;

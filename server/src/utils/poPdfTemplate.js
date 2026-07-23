@@ -2,6 +2,14 @@ const {
   joinVendorShipFromAddress,
   joinPoVendorShipFrom,
 } = require("./vendorShipFrom");
+const {
+  calcAmount,
+  calcDiscountAmt,
+  calcGstAmt,
+  calcLineTotal,
+  summarizePoAmounts,
+  toPaise,
+} = require("./poAmounts");
 
 const escapeHtml = (s) =>
   String(s ?? "")
@@ -202,39 +210,15 @@ const poPdfHtml = ({ po, amountInWords, assets = {}, fontCss = '' }) => {
   const effectiveRightSignatureSrc =
     isCompleted && superStampSrc ? superStampSrc : "";
   const shippingCost = Math.round(Number(po.shippingCost || 0));
-
-  const totals = items.reduce(
-    (acc, li) => {
-      const qty = Number(li.quantity || 0);
-      const unitPrice = Number(li.unitPrice || 0);
-      const discountPct = Number(li.discount || 0);
-      const gstPct = Number(li.gstRate || 0);
-      const base = Math.max(0, qty * unitPrice);
-      const discountAmtRaw = Math.max(0, base * (discountPct / 100));
-      const amountRaw = Math.max(0, base - discountAmtRaw);
-      const gstAmtRaw = Number(li.gstAmount || amountRaw * (gstPct / 100));
-      const totalRaw = Number(li.totalPrice || amountRaw + gstAmtRaw);
-
-      acc.qty += qty;
-      acc.discount += discountAmtRaw;
-      acc.amount += amountRaw;
-      acc.gst += gstAmtRaw;
-      acc.total += totalRaw;
-      return acc;
-    },
-    { qty: 0, discount: 0, amount: 0, gst: 0, total: 0 },
-  );
-
+  const summary = summarizePoAmounts(items, po.shippingCost || 0);
   const roundedTotals = {
-    qty: totals.qty,
-    discount: Math.round(totals.discount),
-    amount: Math.round(totals.amount),
-    gst: Math.round(totals.gst),
-    total: Math.round(totals.total),
+    qty: summary.qty,
+    discount: summary.discountRounded,
+    amount: summary.subtotal,
+    gst: summary.gstTotal,
+    total: summary.itemsTotal,
   };
-  const grandTotalWithShipping = Math.round(
-    totals.total + Number(po.shippingCost || 0),
-  );
+  const grandTotalWithShipping = summary.grandTotal;
 
   const rowsHtml = items
     .map((li, idx) => {
@@ -244,16 +228,10 @@ const poPdfHtml = ({ po, amountInWords, assets = {}, fontCss = '' }) => {
       const unitPrice = Number(li.unitPrice || 0);
       const discountPct = Number(li.discount || 0);
       const gstPct = Number(li.gstRate || 0);
-      const base = Math.max(0, qty * unitPrice);
-      const discountAmtRaw = Math.max(0, base * (discountPct / 100));
-      const amountRaw = Math.max(0, base - discountAmtRaw);
-      const gstAmtRaw = Number(li.gstAmount || amountRaw * (gstPct / 100));
-      const totalRaw = Number(li.totalPrice || amountRaw + gstAmtRaw);
-
-      const discountAmt = Math.round(discountAmtRaw);
-      const amount = Math.round(amountRaw);
-      const gstAmt = Math.round(gstAmtRaw);
-      const total = Math.round(totalRaw);
+      const discountAmtRaw = calcDiscountAmt(li);
+      const amountRaw = calcAmount(li);
+      const gstAmtRaw = calcGstAmt(li);
+      const total = calcLineTotal(li);
 
       return `
         <tr>
@@ -261,12 +239,12 @@ const poPdfHtml = ({ po, amountInWords, assets = {}, fontCss = '' }) => {
           <td>${safe(particulars)}</td>
           <td class="c">${safe(String(qty || ""))}</td>
           <td class="c">${safe(unit)}</td>
-          <td class="r">${fmtMoney(unitPrice)}</td>
+          <td class="r">${fmtMoney(toPaise(unitPrice))}</td>
           <td class="r">${discountPct > 0 ? `${safe(String(discountPct))}%` : ""}</td>
-          <td class="r amt-discount">${discountAmt > 0 ? fmtMoney(discountAmt) : ""}</td>
-          <td class="r">${fmtMoney(amount)}</td>
+          <td class="r amt-discount">${discountAmtRaw > 0 ? fmtMoney(discountAmtRaw) : ""}</td>
+          <td class="r">${fmtMoney(amountRaw)}</td>
           <td class="r">${gstPct > 0 ? `${safe(String(gstPct))}%` : ""}</td>
-          <td class="r amt-gst">${gstAmt > 0 ? fmtMoney(gstAmt) : ""}</td>
+          <td class="r amt-gst">${gstAmtRaw > 0 ? fmtMoney(gstAmtRaw) : ""}</td>
           <td class="r bold">${fmtMoney(total)}</td>
         </tr>
       `;

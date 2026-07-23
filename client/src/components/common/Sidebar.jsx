@@ -1,5 +1,5 @@
 import { cloneElement } from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import inbestTextLogo from '../../../assets/inbest_text_logo.png';
 import inbestWhiteLogo from '../../../assets/white_inbest_logo.png';
@@ -74,14 +74,21 @@ const Sidebar = ({ isOpen = true }) => {
         }`}
       >
         <div className="flex w-full min-w-0 items-center justify-center gap-4">
-          <img
-            src={isOpen ? inbestTextLogo : inbestWhiteLogo}
-            alt="inbest"
-            className={`sidebar-brand-logo object-contain object-center transition-[height,width] duration-200 ${
-              isOpen ? 'h-9 w-auto max-w-[9.5rem]' : 'h-9 w-auto max-w-[3.25rem]'
-            }`}
-            decoding="async"
-          />
+          <Link
+            to="/"
+            title="Go to Dashboard"
+            aria-label="Go to Dashboard"
+            className="inline-flex items-center justify-center rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+          >
+            <img
+              src={isOpen ? inbestTextLogo : inbestWhiteLogo}
+              alt="inbest"
+              className={`sidebar-brand-logo object-contain object-center transition-[height,width] duration-200 ${
+                isOpen ? 'h-9 w-auto max-w-[9.5rem]' : 'h-9 w-auto max-w-[3.25rem]'
+              }`}
+              decoding="async"
+            />
+          </Link>
         </div>
       </div>
 

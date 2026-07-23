@@ -78,9 +78,9 @@ const ItemList = ({ embedded = false }) => {
   };
 
   const categoryColor = (cat) =>
-    CATEGORY_COLOR_MAP[cat] || 'bg-gray-100 text-gray-600 border-gray-200';
+    `category-pill ${CATEGORY_COLOR_MAP[cat] || 'bg-gray-100 text-gray-600 border-gray-200'}`;
   const departmentColor = (department) =>
-    DEPARTMENT_COLOR_MAP[department] || 'bg-gray-100 text-gray-600 border-gray-200';
+    `category-pill ${DEPARTMENT_COLOR_MAP[department] || 'bg-gray-100 text-gray-600 border-gray-200'}`;
 
   const categoryFilterOptions = activeDepartment === ALL_TAB
     ? ITEM_DEPARTMENTS.flatMap((department) => DEPARTMENT_CATEGORIES[department] || [])
@@ -291,7 +291,7 @@ const ItemList = ({ embedded = false }) => {
                       <td className="text-center text-gray-500">{item.unit}</td>
                       <td className="text-right font-semibold">{formatCurrency(item.unitPrice)}</td>
                       <td className="text-center">
-                        <span className={`badge ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                        <span className={`badge ${item.isActive ? 'status-pill-active bg-green-100 text-green-700' : 'status-pill-inactive bg-gray-100 text-gray-500'}`}>
                           {item.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>

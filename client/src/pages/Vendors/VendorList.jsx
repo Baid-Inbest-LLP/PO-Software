@@ -167,7 +167,7 @@ const VendorList = ({ embedded = false }) => {
                     <td className="text-center text-gray-500">{v.phone || '—'}</td>
                     <td className="text-center text-gray-500">{v.taxId || '—'}</td>
                     <td className="text-center">
-                      <span className={`badge ${v.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      <span className={`badge ${v.isActive ? 'status-pill-active bg-green-100 text-green-700' : 'status-pill-inactive bg-gray-100 text-gray-500'}`}>
                         {v.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>

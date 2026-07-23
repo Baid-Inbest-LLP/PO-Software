@@ -169,20 +169,18 @@ const purchaseOrderSchema = new mongoose.Schema(
 );
 
 purchaseOrderSchema.pre('save', function (next) {
+  const { applyLineItemAmounts, summarizePoAmounts } = require('../utils/poAmounts');
+
   this.lineItems.forEach((item) => {
-    const basePrice = item.quantity * item.unitPrice;
-    const discountAmt = basePrice * (item.discount / 100);
-    const discountedPrice = basePrice - discountAmt;
-    item.gstAmount = parseFloat((discountedPrice * (item.gstRate / 100)).toFixed(2));
-    item.totalPrice = parseFloat((discountedPrice + item.gstAmount).toFixed(2));
+    const { gstAmount, totalPrice } = applyLineItemAmounts(item);
+    item.gstAmount = gstAmount;
+    item.totalPrice = totalPrice;
   });
 
-  this.subtotal = parseFloat(
-    this.lineItems.reduce((sum, item) => sum + item.totalPrice, 0).toFixed(2)
-  );
-  this.totalAmount = parseFloat(
-    (this.subtotal + (this.shippingCost || 0)).toFixed(2)
-  );
+  const summary = summarizePoAmounts(this.lineItems, this.shippingCost || 0);
+  // Keep subtotal as sum of rounded line totals for backward-compatible field usage.
+  this.subtotal = summary.itemsTotal;
+  this.totalAmount = summary.grandTotal;
 
   if (this.status === 'completed' && !this.completedAt) {
     this.completedAt = new Date();

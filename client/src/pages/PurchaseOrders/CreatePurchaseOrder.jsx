@@ -19,6 +19,15 @@ import {
   amountToWords,
   vendorLocationsList,
 } from '../../utils/helpers';
+import {
+  calcAmount,
+  calcDiscountAmt,
+  calcGstAmtFromRate,
+  calcLineTotal,
+  formatExactAmount as formatExactWith,
+  formatRoundedAmount as formatRoundedWith,
+  summarizePoAmounts,
+} from '../../utils/poAmounts';
 import CustomSelect from '../../components/common/CustomSelect';
 import toast from 'react-hot-toast';
 
@@ -92,26 +101,12 @@ const vendorAddressFromLocation = (loc) => ({
   country: loc?.country || '',
 });
 
-// Discount first, then GST on discounted price
-const calcDiscountAmt = (li) => {
-  const base = (li.quantity || 0) * (li.unitPrice || 0);
-  return parseFloat((base * ((li.discount || 0) / 100)).toFixed(2));
-};
-
-const calcGstAmt = (li) => {
-  const base = (li.quantity || 0) * (li.unitPrice || 0);
-  const discounted = base - calcDiscountAmt(li);
-  return parseFloat((discounted * ((li.gstRate || 0) / 100)).toFixed(2));
-};
-
-const calcPreGstAmount = (li) => {
-  const base = (li.quantity || 0) * (li.unitPrice || 0);
-  return parseFloat((base - calcDiscountAmt(li)).toFixed(2));
-};
-
-const calcLineItem = (li) => {
-  return parseFloat((calcPreGstAmount(li) + calcGstAmt(li)).toFixed(2));
-};
+// Industry-standard: Amount/GST at paise; line total = round(Amount + GST)
+const calcGstAmt = (li) => calcGstAmtFromRate(li);
+const calcPreGstAmount = (li) => calcAmount(li);
+const calcLineItem = (li) => calcLineTotal(li, { preferStoredGst: false });
+const formatExactAmount = (amount) => formatExactWith(formatCurrency, amount);
+const formatRoundedAmount = (amount) => formatRoundedWith(formatCurrency, amount);
 
 const getItemDepartment = (item) => {
   if (!item) return '';
@@ -353,14 +348,23 @@ const CreatePurchaseOrder = () => {
     }));
   };
 
-  const subtotal = form.lineItems.reduce((sum, li) => sum + calcLineItem(li), 0);
-  const total = parseFloat((subtotal + Number(form.shippingCost || 0)).toFixed(2));
+  const orderSummary = summarizePoAmounts(form.lineItems, form.shippingCost, {
+    preferStoredGst: false,
+  });
+  const subtotal = orderSummary.subtotal;
+  const gstTotal = orderSummary.gstTotal;
+  const shippingRounded = orderSummary.shipping;
+  const total = orderSummary.grandTotal;
 
-  // Group items by category in the order defined by DEPARTMENT_CATEGORIES
+  // Group items by category; when a department is selected, only that department's items
   const groupedItemOptions = useMemo(() => {
     if (itemOptions.length === 0) return [];
+    const source = selectedDepartment
+      ? itemOptions.filter((item) => getItemDepartment(item) === selectedDepartment)
+      : itemOptions;
+    if (source.length === 0) return [];
     const ALL_CATEGORIES_ORDERED = Object.values(DEPARTMENT_CATEGORIES).flat();
-    const sorted = [...itemOptions].sort((a, b) => {
+    const sorted = [...source].sort((a, b) => {
       const catA = a.category || 'Uncategorized';
       const catB = b.category || 'Uncategorized';
       if (catA !== catB) {
@@ -384,12 +388,12 @@ const CreatePurchaseOrder = () => {
           value: item._id,
           label: item.name,
           badge: item.category || 'Uncategorized',
-          badgeClass: CATEGORY_COLOR_MAP[item.category] || 'bg-gray-100 text-gray-700 border-gray-200',
+          badgeClass: `category-pill ${CATEGORY_COLOR_MAP[item.category] || 'bg-gray-100 text-gray-700 border-gray-200'}`,
         })
       );
     });
     return result;
-  }, [itemOptions]);
+  }, [itemOptions, selectedDepartment]);
 
   const handleLineItemChange = useCallback((idx, field, value) => {
     setForm((prev) => {
@@ -785,10 +789,10 @@ const CreatePurchaseOrder = () => {
 
                     {/* Amount (after discount, before GST) */}
                     <td className="px-3 pt-3 pb-2 text-right !text-base text-gray-700">
-                      {formatCurrency(calcPreGstAmount(li))}
+                      {formatExactAmount(calcPreGstAmount(li))}
                       {discAmt > 0 && (
                         <p className="text-xs text-red-500 text-right mt-0.5">
-                          disc: -{formatCurrency(discAmt)}
+                          disc: -{formatExactAmount(discAmt)}
                         </p>
                       )}
                       {discAmt === 0 && <p className="text-xs mt-0.5 invisible">_</p>}
@@ -796,10 +800,10 @@ const CreatePurchaseOrder = () => {
 
                     {/* Total with GST */}
                     <td className="px-3 pt-3 pb-2 text-right font-semibold !text-base text-primary-700">
-                      {formatCurrency(calcLineItem(li))}
+                      {formatRoundedAmount(calcLineItem(li))}
                       {gstAmt > 0 && (
                         <p className="text-xs text-green-600 text-right mt-0.5">
-                          GST: +{formatCurrency(gstAmt)}
+                          GST: +{formatExactAmount(gstAmt)}
                         </p>
                       )}
                       {gstAmt === 0 && <p className="text-xs mt-0.5 invisible">_</p>}
@@ -859,7 +863,11 @@ const CreatePurchaseOrder = () => {
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Subtotal</span>
-              <span className="font-medium text-xl">{formatCurrency(subtotal)}</span>
+              <span className="font-medium text-xl">{formatRoundedAmount(subtotal)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">GST</span>
+              <span className="font-medium text-xl text-emerald-700">{formatRoundedAmount(gstTotal)}</span>
             </div>
             <div className="flex items-center justify-between text-sm gap-4">
               <label className="text-gray-600 whitespace-nowrap">Shipping Cost</label>
@@ -871,9 +879,15 @@ const CreatePurchaseOrder = () => {
                 onChange={(e) => setForm((p) => ({ ...p, shippingCost: parseFloat(e.target.value) || 0 }))}
               />
             </div>
+            {shippingRounded > 0 && (
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Shipping (rounded)</span>
+                <span className="font-medium">{formatRoundedAmount(shippingRounded)}</span>
+              </div>
+            )}
             <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-              <span className="font-bold text-gray-900">Total</span>
-              <span className="text-xl font-semibold text-primary-700">{formatCurrency(total)}</span>
+              <span className="font-bold text-gray-900">Grand Total</span>
+              <span className="text-xl font-semibold text-primary-700">{formatRoundedAmount(total)}</span>
             </div>
             <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 mt-1">
               <p className="text-xs text-gray-400 uppercase font-semibold tracking-wide mb-1">Amount in Words : </p>
