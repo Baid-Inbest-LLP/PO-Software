@@ -143,7 +143,7 @@ const Dashboard = () => {
           icon={<svg className="w-5 h-5 sm:w-6 sm:h-6 xl:w-7 xl:h-7 max-[1660px]:w-6 max-[1660px]:h-6 max-[1536px]:w-5 max-[1536px]:h-5 max-[1366px]:w-[18px] max-[1366px]:h-[18px] max-[1280px]:w-4 max-[1280px]:h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
         />
         <StatCard
-          label="Completed" value={stats.completed || 0}
+          label="Approved" value={stats.completed || 0}
           color="text-emerald-700" iconBg="bg-emerald-100" accent="bg-emerald-500"
           icon={<svg className="w-5 h-5 sm:w-6 sm:h-6 xl:w-7 xl:h-7 max-[1660px]:w-6 max-[1660px]:h-6 max-[1536px]:w-5 max-[1536px]:h-5 max-[1366px]:w-[18px] max-[1366px]:h-[18px] max-[1280px]:w-4 max-[1280px]:h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
         />
@@ -308,7 +308,7 @@ const Dashboard = () => {
                 </div>
                 <div className="text-right flex items-center gap-3">
                   <div>
-                    <p className="text-sm font-bold text-gray-800">{formatCurrency(order.totalAmount)}</p>
+                    <p className="text-sm font-bold text-gray-800">{formatCurrency(Math.round(Number(order.totalAmount) || 0)).replace(/\.00$/, '')}</p>
                     <span className={`${STATUS_COLORS[order.status]} !text-[10px]`}>{STATUS_LABELS[order.status]}</span>
                   </div>
                   <svg className="w-4 h-4 text-gray-300 group-hover:text-primary-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

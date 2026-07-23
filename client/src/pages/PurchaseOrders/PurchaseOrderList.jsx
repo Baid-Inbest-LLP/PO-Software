@@ -189,7 +189,7 @@ const PurchaseOrderList = () => {
                               ? ''
                               : 'opacity-40 grayscale cursor-not-allowed'
                           }`}
-                          title={['approved_by_admin', 'completed'].includes(order.status) ? 'Download PDF' : 'PDF available when status is Approved or completed'}
+                          title={['approved_by_admin', 'completed'].includes(order.status) ? 'Download PDF' : 'PDF available when status is Completed or Approved'}
                         >
                           <img src={pdfIcon} alt="PDF" className="w-4 h-4" />
                         </button>
@@ -203,7 +203,7 @@ const PurchaseOrderList = () => {
                               ? ''
                               : 'opacity-40 grayscale cursor-not-allowed'
                           }`}
-                          title={['approved_by_admin', 'completed'].includes(order.status) ? 'Download Excel' : 'Excel available when status is Approved or completed'}
+                          title={['approved_by_admin', 'completed'].includes(order.status) ? 'Download Excel' : 'Excel available when status is Completed or Approved'}
                         >
                           <img src={excelIcon} alt="Excel" className="w-4 h-4" />
                         </button>
