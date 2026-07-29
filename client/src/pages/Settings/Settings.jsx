@@ -54,6 +54,7 @@ const Settings = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [resetPasswordUser, setResetPasswordUser] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [createSignatureFile, setCreateSignatureFile] = useState(null);
   const [createSignaturePreview, setCreateSignaturePreview] = useState('');
@@ -117,6 +118,19 @@ const Settings = () => {
     formState: { errors: editErrors, isSubmitting: editSubmitting },
   } = useForm({
     defaultValues: { name: '', email: '', isActive: true },
+  });
+
+  const {
+    register: registerResetPwd,
+    handleSubmit: handleSubmitResetPwd,
+    reset: resetResetPwd,
+    watch: watchResetPwd,
+    formState: { errors: resetPwdErrors, isSubmitting: resetPwdSubmitting },
+  } = useForm({
+    defaultValues: {
+      newPassword: '',
+      confirmPassword: '',
+    },
   });
 
   const onCreateUser = async (data) => {
@@ -241,6 +255,34 @@ const Settings = () => {
     setEditSignaturePreview('');
     setClearEditSignature(false);
     resetEdit({ name: '', email: '', isActive: true });
+  };
+
+  const openResetPassword = (targetUser) => {
+    setResetPasswordUser(targetUser);
+    resetResetPwd({ newPassword: '', confirmPassword: '' });
+  };
+
+  const closeResetPassword = () => {
+    setResetPasswordUser(null);
+    resetResetPwd({ newPassword: '', confirmPassword: '' });
+  };
+
+  const onResetUserPassword = async (data) => {
+    if (!resetPasswordUser) return;
+    if (data.newPassword !== data.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    try {
+      await authAPI.resetUserPassword(resetPasswordUser._id, {
+        newPassword: data.newPassword,
+      });
+      toast.success(`Password reset for ${resetPasswordUser.name}`);
+      closeResetPassword();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to reset password');
+    }
   };
 
   const editingIsPoAdmin = editingUser?.role === 'PO_ADMIN' || editingUser?.role === 'ADMIN';
@@ -503,6 +545,7 @@ const Settings = () => {
                       const canEdit = isSuperadmin
                         ? !isTargetSuperadmin
                         : !isSelf && !isTargetSuperadmin && !isTargetPoAdmin;
+                      const canResetPassword = isSuperadmin && !isTargetSuperadmin;
                       const deleteDisabled = !canEdit;
                       const disabledReason = isSuperadmin
                         ? 'Superadmin user cannot be modified here'
@@ -534,6 +577,24 @@ const Settings = () => {
                           </td>
                           <td className="text-center">
                             <div className="flex items-center justify-center gap-0.5">
+                              {canResetPassword && (
+                                <button
+                                  type="button"
+                                  onClick={() => openResetPassword(u)}
+                                  className="p-1.5 rounded text-gray-400 hover:text-amber-600 transition-colors"
+                                  title="Reset password"
+                                  aria-label={`Reset password for ${u.name}`}
+                                >
+                                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M15 7a4 4 0 11-7.874 1H3m0 0v4m0-4h4m6 4l2 2m0 0l4-4m-4 4v4"
+                                    />
+                                  </svg>
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 disabled={!canEdit}
@@ -596,6 +657,97 @@ const Settings = () => {
                 onConfirm={handleDelete}
                 onCancel={() => setConfirmDelete(null)}
               />
+
+              {resetPasswordUser && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                  <div
+                    className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-gray-100"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="reset-user-password-title"
+                  >
+                    <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                      <div>
+                        <h2 id="reset-user-password-title" className="text-lg font-bold text-gray-900">
+                          Reset user password
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-0.5">
+                          Set a new password without the user&apos;s current password.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={closeResetPassword}
+                        disabled={resetPwdSubmitting}
+                        className="text-gray-400 hover:text-gray-600 p-1 rounded-lg disabled:opacity-50"
+                        aria-label="Close"
+                      >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <form onSubmit={handleSubmitResetPwd(onResetUserPassword)} className="p-6 space-y-4">
+                      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Login ID</p>
+                        <p className="mt-1 font-mono text-sm font-semibold text-gray-900 break-all">
+                          {resetPasswordUser.email}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500">
+                          {resetPasswordUser.name} · {roleLabel(resetPasswordUser.role)}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">New password</label>
+                        <PasswordInput
+                          autoComplete="new-password"
+                          {...registerResetPwd('newPassword', {
+                            required: 'New password is required',
+                            pattern: {
+                              value: STRONG_PASSWORD_PATTERN,
+                              message: PASSWORD_POLICY_LABEL,
+                            },
+                          })}
+                        />
+                        {resetPwdErrors.newPassword && (
+                          <p className="text-red-500 text-xs mt-1">{resetPwdErrors.newPassword.message}</p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-1">{PASSWORD_POLICY_LABEL}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Confirm new password</label>
+                        <PasswordInput
+                          autoComplete="new-password"
+                          {...registerResetPwd('confirmPassword', {
+                            required: 'Please confirm the new password',
+                            validate: (value) =>
+                              value === watchResetPwd('newPassword') || 'Does not match new password',
+                          })}
+                        />
+                        {resetPwdErrors.confirmPassword && (
+                          <p className="text-red-500 text-xs mt-1">{resetPwdErrors.confirmPassword.message}</p>
+                        )}
+                      </div>
+                      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+                        Existing passwords are securely hashed and cannot be viewed. Share this new password with the user through a secure channel.
+                      </div>
+                      <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+                        <button
+                          type="button"
+                          onClick={closeResetPassword}
+                          disabled={resetPwdSubmitting}
+                          className="btn-secondary"
+                        >
+                          Cancel
+                        </button>
+                        <button type="submit" disabled={resetPwdSubmitting} className="btn-primary">
+                          {resetPwdSubmitting ? 'Resetting…' : 'Reset password'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
 
               {editingUser && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">

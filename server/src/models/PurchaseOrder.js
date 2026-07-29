@@ -22,7 +22,7 @@ const lineItemSchema = new mongoose.Schema(
     },
     unitPrice: {
       type: Number,
-      required: [true, 'Unit price is required'],
+      default: 0,
       min: [0, 'Unit price cannot be negative'],
     },
     discount: {

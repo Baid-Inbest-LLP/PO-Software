@@ -758,7 +758,7 @@ const CreatePurchaseOrder = () => {
                     <td className="px-3 pt-3 pb-2">
                       <input
                         type="number" min="0" step="0.01"
-                        className="input-field !text-base text-right"
+                        className={`input-field !text-base text-right ${!Number(li.unitPrice) ? 'border-amber-400 focus:ring-amber-400' : ''}`}
                         value={li.unitPrice}
                         onFocus={(e) => e.target.select()}
                         onChange={(e) => handleLineItemChange(idx, 'unitPrice', parseFloat(e.target.value) || 0)}
@@ -894,6 +894,15 @@ const CreatePurchaseOrder = () => {
               <p className="text-xl text-primary-700 font-semibold leading-snug">{amountToWords(total)}</p>
             </div>
           </div>
+
+          {form.lineItems.some((li) => li.item && !Number(li.unitPrice)) && (
+            <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <svg className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
+              <span>Some items are missing a unit price. You can save the PO now, but all unit prices must be filled in before it can be completed.</span>
+            </div>
+          )}
 
           <div className="mt-6 flex items-stretch gap-2">
             {!isEdit && (

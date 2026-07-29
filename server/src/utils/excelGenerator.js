@@ -305,47 +305,51 @@ const generatePOExcel = async (po, { adminSignatureBuffer, mdSignatureBuffer } =
   ws.mergeCells(`B${r}:L${r}`); ws.getCell(`B${r}`).value = `Amount (in words): ${amountToWordsINR(grandTotalRounded)}`; ws.getCell(`B${r}`).font = { name: 'Calibri', size: 18, bold: true, color: { argb: 'FF0B2F81' } }; ws.getCell(`B${r}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
 
   // Keep signatures very close to the amount-in-words section.
-  ws.getRow(r + 1).height = 4;
-  r += 2;
-
-  // Signature size (px): Excel 320×100; PDF is larger (400×200) in poPdfTemplate.js
-  const EXCEL_SIGNATURE_WIDTH = 300;
-  const EXCEL_SIGNATURE_HEIGHT = 120;
-  // Center signatures over their respective text groups (B:E and H:L).
-  const LEFT_SIGNATURE_COL = 2.4;
-  const RIGHT_SIGNATURE_COL = 8.2;
-  const SIGNATURE_ROW_OFFSET = -0.55;
-  ws.getRow(r).height = 90;
-  const signatureRow = r;
   const shouldShowAdminSignature = isAdminApproved || isCompleted;
   const shouldShowMdSignature = isCompleted;
-  if (shouldShowAdminSignature && adminSignaturePng) {
-    const leftSignatureImageId = wb.addImage({ buffer: adminSignaturePng, extension: 'png' });
-    ws.addImage(leftSignatureImageId, {
-      tl: { col: LEFT_SIGNATURE_COL, row: signatureRow + SIGNATURE_ROW_OFFSET },
-      ext: { width: EXCEL_SIGNATURE_WIDTH, height: EXCEL_SIGNATURE_HEIGHT },
-    });
+  const showSignatureSection = shouldShowAdminSignature || shouldShowMdSignature;
+
+  if (showSignatureSection) {
+    ws.getRow(r + 1).height = 4;
+    r += 2;
+
+    // Signature size (px): Excel 320×100; PDF is larger (400×200) in poPdfTemplate.js
+    const EXCEL_SIGNATURE_WIDTH = 300;
+    const EXCEL_SIGNATURE_HEIGHT = 120;
+    // Center signatures over their respective text groups (B:E and H:L).
+    const LEFT_SIGNATURE_COL = 2.4;
+    const RIGHT_SIGNATURE_COL = 8.2;
+    const SIGNATURE_ROW_OFFSET = -0.55;
+    ws.getRow(r).height = 90;
+    const signatureRow = r;
+    if (shouldShowAdminSignature && adminSignaturePng) {
+      const leftSignatureImageId = wb.addImage({ buffer: adminSignaturePng, extension: 'png' });
+      ws.addImage(leftSignatureImageId, {
+        tl: { col: LEFT_SIGNATURE_COL, row: signatureRow + SIGNATURE_ROW_OFFSET },
+        ext: { width: EXCEL_SIGNATURE_WIDTH, height: EXCEL_SIGNATURE_HEIGHT },
+      });
+    }
+    if (shouldShowMdSignature && mdSignaturePng) {
+      const rightSignatureImageId = wb.addImage({ buffer: mdSignaturePng, extension: 'png' });
+      ws.addImage(rightSignatureImageId, {
+        tl: { col: RIGHT_SIGNATURE_COL, row: signatureRow + SIGNATURE_ROW_OFFSET },
+        ext: { width: EXCEL_SIGNATURE_WIDTH, height: EXCEL_SIGNATURE_HEIGHT },
+      });
+    }
+    r += 1;
+    ws.getRow(r).height = 8;
+    r += 1;
+    ws.getRow(r).height = 24;
+    ws.mergeCells(`B${r}:E${r}`); ws.getCell(`B${r}`).value = '(Authorised Signatories)'; ws.getCell(`B${r}`).alignment = { horizontal: 'center' }; ws.getCell(`B${r}`).font = { name: 'Calibri', size: 16, bold: true };
+    ws.mergeCells(`H${r}:L${r}`); ws.getCell(`H${r}`).value = '(Authorised Signatory)'; ws.getCell(`H${r}`).alignment = { horizontal: 'center' }; ws.getCell(`H${r}`).font = { name: 'Calibri', size: 16, bold: true };
+    r += 1;
+    ws.mergeCells(`B${r}:E${r}`); ws.getCell(`B${r}`).value = 'Admin & Accounts'; ws.getCell(`B${r}`).alignment = { horizontal: 'center' }; ws.getCell(`B${r}`).font = { name: 'Calibri', size: 14, semibold: true };
+    ws.mergeCells(`H${r}:L${r}`); ws.getCell(`H${r}`).value = 'MD & Founder'; ws.getCell(`H${r}`).alignment = { horizontal: 'center' }; ws.getCell(`H${r}`).font = { name: 'Calibri', size: 14, semibold: true };
   }
-  if (shouldShowMdSignature && mdSignaturePng) {
-    const rightSignatureImageId = wb.addImage({ buffer: mdSignaturePng, extension: 'png' });
-    ws.addImage(rightSignatureImageId, {
-      tl: { col: RIGHT_SIGNATURE_COL, row: signatureRow + SIGNATURE_ROW_OFFSET },
-      ext: { width: EXCEL_SIGNATURE_WIDTH, height: EXCEL_SIGNATURE_HEIGHT },
-    });
-  }
-  r += 1;
-  ws.getRow(r).height = 8;
-  r += 1;
-  ws.getRow(r).height = 24;
-  ws.mergeCells(`B${r}:E${r}`); ws.getCell(`B${r}`).value = '(Authorised Signatories)'; ws.getCell(`B${r}`).alignment = { horizontal: 'center' }; ws.getCell(`B${r}`).font = { name: 'Calibri', size: 16, bold: true };
-  ws.mergeCells(`H${r}:L${r}`); ws.getCell(`H${r}`).value = '(Authorised Signatory)'; ws.getCell(`H${r}`).alignment = { horizontal: 'center' }; ws.getCell(`H${r}`).font = { name: 'Calibri', size: 16, bold: true };
-  r += 1;
-  ws.mergeCells(`B${r}:E${r}`); ws.getCell(`B${r}`).value = 'Admin & Accounts'; ws.getCell(`B${r}`).alignment = { horizontal: 'center' }; ws.getCell(`B${r}`).font = { name: 'Calibri', size: 14, semibold: true };
-  ws.mergeCells(`H${r}:L${r}`); ws.getCell(`H${r}`).value = 'MD & Founder'; ws.getCell(`H${r}`).alignment = { horizontal: 'center' }; ws.getCell(`H${r}`).font = { name: 'Calibri', size: 14, semibold: true };
 
   const office = [po.company?.locations?.[0]?.street, po.company?.locations?.[0]?.city, po.company?.locations?.[0]?.state, po.company?.locations?.[0]?.zipCode, po.company?.locations?.[0]?.country].filter(Boolean).join(', ');
   const ship = [po.shippingAddress?.street, po.shippingAddress?.city, po.shippingAddress?.state, po.shippingAddress?.zipCode, po.shippingAddress?.country].filter(Boolean).join(', ');
-  r += 5;
+  r += showSignatureSection ? 5 : 2;
   ws.mergeCells(`B${r}:L${r}`);
   const f = ws.getCell(`B${r}`);
   f.value = office || ship || '';

@@ -1,24 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { fetchPurchaseOrders } from '../../features/purchaseOrders/purchaseOrdersSlice';
+import { fetchPurchaseOrders, deletePurchaseOrder } from '../../features/purchaseOrders/purchaseOrdersSlice';
 import { formatCurrency, formatDate, STATUS_COLORS, STATUS_LABELS, downloadBlob } from '../../utils/helpers';
 import { purchaseOrdersAPI } from '../../services/api';
 import CustomSelect from '../../components/common/CustomSelect';
 import Pagination, { TABLE_PAGE_SIZE } from '../../components/common/Pagination';
 import PageBanner from '../../components/common/PageBanner';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import Skeleton, { SkeletonText } from '../../components/common/Skeleton';
 import toast from 'react-hot-toast';
 import excelIcon from '../../../assets/excel.svg';
 import pdfIcon from '../../../assets/pdf.svg';
 
+const DOWNLOADABLE_STATUSES = ['pending', 'approved_by_admin', 'completed'];
+const DELETABLE_STATUSES = ['pending', 'draft'];
+
 const PurchaseOrderList = () => {
   const dispatch = useDispatch();
   const { orders, total, pages, loading } = useSelector((state) => state.purchaseOrders);
+  const { user } = useSelector((state) => state.auth);
+  const canDeletePo = user?.role === 'PO_ADMIN' || user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const [downloading, setDownloading] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const formatRoundedCurrency = (amount) =>
     formatCurrency(Math.round(Number(amount) || 0)).replace(/\.00$/, '');
 
@@ -51,6 +58,20 @@ const PurchaseOrderList = () => {
       setDownloading(null);
     }
   };
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    const result = await dispatch(deletePurchaseOrder(confirmDelete.id));
+    setConfirmDelete(null);
+    if (deletePurchaseOrder.fulfilled.match(result)) {
+      toast.success('Purchase order deleted');
+      dispatch(fetchPurchaseOrders({ search, status, page, limit: TABLE_PAGE_SIZE }));
+    } else {
+      toast.error(result.payload);
+    }
+  };
+
+  const cancelDelete = useCallback(() => setConfirmDelete(null), []);
 
   return (
     <div>
@@ -180,33 +201,47 @@ const PurchaseOrderList = () => {
                           </svg>
                         </Link>
 
-                        {/* PDF — enabled after admin approval */}
+                        {/* PDF — enabled from pending onward */}
                         <button
-                          onClick={() => ['approved_by_admin', 'completed'].includes(order.status) && handleDownload(order._id, order.poNumber, 'pdf')}
-                          disabled={!['approved_by_admin', 'completed'].includes(order.status) || downloading === `${order._id}-pdf`}
+                          onClick={() => DOWNLOADABLE_STATUSES.includes(order.status) && handleDownload(order._id, order.poNumber, 'pdf')}
+                          disabled={!DOWNLOADABLE_STATUSES.includes(order.status) || downloading === `${order._id}-pdf`}
                           className={`p-1.5 rounded ${
-                            ['approved_by_admin', 'completed'].includes(order.status)
+                            DOWNLOADABLE_STATUSES.includes(order.status)
                               ? ''
                               : 'opacity-40 grayscale cursor-not-allowed'
                           }`}
-                          title={['approved_by_admin', 'completed'].includes(order.status) ? 'Download PDF' : 'PDF available when status is Completed or Approved'}
+                          title={DOWNLOADABLE_STATUSES.includes(order.status) ? 'Download PDF' : 'PDF available when status is Pending, Approved, or Completed'}
                         >
                           <img src={pdfIcon} alt="PDF" className="w-4 h-4" />
                         </button>
 
-                        {/* Excel — enabled after admin approval */}
+                        {/* Excel — enabled from pending onward */}
                         <button
-                          onClick={() => ['approved_by_admin', 'completed'].includes(order.status) && handleDownload(order._id, order.poNumber, 'excel')}
-                          disabled={!['approved_by_admin', 'completed'].includes(order.status) || downloading === `${order._id}-excel`}
+                          onClick={() => DOWNLOADABLE_STATUSES.includes(order.status) && handleDownload(order._id, order.poNumber, 'excel')}
+                          disabled={!DOWNLOADABLE_STATUSES.includes(order.status) || downloading === `${order._id}-excel`}
                           className={`p-1.5 rounded ${
-                            ['approved_by_admin', 'completed'].includes(order.status)
+                            DOWNLOADABLE_STATUSES.includes(order.status)
                               ? ''
                               : 'opacity-40 grayscale cursor-not-allowed'
                           }`}
-                          title={['approved_by_admin', 'completed'].includes(order.status) ? 'Download Excel' : 'Excel available when status is Completed or Approved'}
+                          title={DOWNLOADABLE_STATUSES.includes(order.status) ? 'Download Excel' : 'Excel available when status is Pending, Approved, or Completed'}
                         >
                           <img src={excelIcon} alt="Excel" className="w-4 h-4" />
                         </button>
+
+                        {/* Delete — pending/draft, Admin & Superadmin only */}
+                        {canDeletePo && DELETABLE_STATUSES.includes(order.status) && (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDelete({ id: order._id, poNumber: order.poNumber })}
+                            className="p-1.5 text-gray-400 hover:text-red-600 rounded transition-colors"
+                            title="Delete"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -226,6 +261,16 @@ const PurchaseOrderList = () => {
           />
         )}
       </div>
+
+      <ConfirmModal
+        open={!!confirmDelete}
+        title="Delete purchase order"
+        message={`Are you sure you want to delete "${confirmDelete?.poNumber}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={cancelDelete}
+      />
     </div>
   );
 };

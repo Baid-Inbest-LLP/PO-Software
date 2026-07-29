@@ -6,13 +6,6 @@ const { processAvatarUpload, avatarBase64ToDataUri } = require('../utils/process
 
 const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
 
-const HARDCODED_SUPERADMIN = {
-  name: 'System Superadmin',
-  email: normalizeEmail(process.env.SUPERADMIN_EMAIL || 'superadmin@inbestnow.com'),
-  password: process.env.SUPERADMIN_PASSWORD || 'Superadmin@123',
-  role: 'SUPERADMIN',
-};
-
 const USER_CREATABLE_ROLES = ['PO_ADMIN', 'PO_Assistant'];
 const normalizeRole = (role) => (role === 'ADMIN' ? 'PO_ADMIN' : role);
 const isPoAdminRole = (role) => {
@@ -46,13 +39,6 @@ const toPublicUser = (user, { includeSignature = false } = {}) => {
     out.signaturePreview = signatureBase64ToDataUri(doc.signatureImage);
   }
   return out;
-};
-
-const ensureHardcodedSuperadmin = async () => {
-  const existingSuperadmin = await User.findOne({ email: HARDCODED_SUPERADMIN.email });
-  if (existingSuperadmin) return existingSuperadmin;
-  const createdSuperadmin = await User.create(HARDCODED_SUPERADMIN);
-  return createdSuperadmin;
 };
 
 const applySignatureToUser = (user, signatureImageInput, { required = false } = {}) => {
@@ -120,7 +106,6 @@ const login = async (req, res) => {
 
   const email = normalizeEmail(req.body.email);
   const { password } = req.body;
-  await ensureHardcodedSuperadmin();
 
   const user = await User.findOne({ email }).select('+password +avatarImage');
   if (!user || !(await user.comparePassword(password))) {
@@ -259,10 +244,6 @@ const deleteUser = async (req, res) => {
   if (!target) return res.status(404).json({ message: 'User not found' });
   const actorRole = normalizeRole(req.user?.role);
 
-  if (target.email === HARDCODED_SUPERADMIN.email) {
-    return res.status(403).json({ message: 'Cannot delete SUPERADMIN user' });
-  }
-
   if (target.role === 'SUPERADMIN') {
     return res.status(403).json({ message: 'SUPERADMIN users cannot be deleted' });
   }
@@ -332,6 +313,38 @@ const updateUser = async (req, res) => {
   });
 };
 
+const resetUserPassword = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: errors.array()[0].msg });
+  }
+
+  const actorRole = normalizeRole(req.user?.role);
+  if (actorRole !== 'SUPERADMIN') {
+    return res.status(403).json({ message: 'Only Superadmin can reset user passwords' });
+  }
+
+  const target = await User.findById(req.params.id);
+  if (!target) return res.status(404).json({ message: 'User not found' });
+
+  if (normalizeRole(target.role) === 'SUPERADMIN') {
+    return res.status(403).json({ message: 'Superadmin passwords cannot be reset from user management' });
+  }
+
+  target.password = req.body.newPassword;
+  await target.save();
+
+  res.json({
+    message: 'Password reset successfully',
+    user: {
+      _id: target._id,
+      name: target.name,
+      email: target.email,
+      role: target.role,
+    },
+  });
+};
+
 module.exports = {
   register,
   login,
@@ -343,4 +356,5 @@ module.exports = {
   getUserSignature,
   deleteUser,
   updateUser,
+  resetUserPassword,
 };

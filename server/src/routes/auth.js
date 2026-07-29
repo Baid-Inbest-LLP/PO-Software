@@ -11,6 +11,7 @@ const {
   getUserSignature,
   deleteUser,
   updateUser,
+  resetUserPassword,
 } = require('../controllers/authController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -58,6 +59,17 @@ router.put('/change-password', protect, changePassword);
 
 router.get('/users', protect, authorize('SUPERADMIN', 'PO_ADMIN'), getUsers);
 router.get('/users/:id/signature', protect, authorize('SUPERADMIN'), getUserSignature);
+router.patch(
+  '/users/:id/password',
+  protect,
+  authorize('SUPERADMIN'),
+  [
+    body('newPassword')
+      .matches(PASSWORD_POLICY)
+      .withMessage('Password must be at least 8 characters and include uppercase, lowercase, number, and special character'),
+  ],
+  resetUserPassword
+);
 router.put(
   '/users/:id',
   protect,

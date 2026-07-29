@@ -77,12 +77,10 @@ const VendorForm = ({ vendor, onClose }) => {
     if (!form.phone.trim()) errs.phone = 'Phone number is required';
     else if (!PHONE_REGEX.test(form.phone.replace(/\s/g, '')))
       errs.phone = 'Enter a valid Indian phone number (e.g. 9876543210 or +919876543210)';
-    if (!form.taxId.trim()) errs.taxId = 'GST No is required';
-    else if (!GST_REGEX.test(form.taxId.toUpperCase()))
+    if (form.taxId.trim() && !GST_REGEX.test(form.taxId.toUpperCase()))
       errs.taxId = 'Enter a valid GST number (e.g. 27AAPFU0939F1ZV)';
 
     form.locations.forEach((loc, i) => {
-      if (!loc.label.trim()) errs[`loc_${i}_label`] = 'Location name is required';
       if (!loc.street.trim()) errs[`loc_${i}_street`] = 'Street address is required';
       if (!loc.city.trim()) errs[`loc_${i}_city`] = 'City is required';
       if (!loc.state.trim()) errs[`loc_${i}_state`] = 'State is required';
@@ -181,9 +179,6 @@ const VendorForm = ({ vendor, onClose }) => {
             <h2 className="text-lg font-bold text-gray-900">
               {isEdit ? 'Edit Vendor' : 'Add New Vendor'}
             </h2>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {isEdit ? 'Update vendor and addresses' : 'Add vendor details and one or more addresses'}
-            </p>
           </div>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -226,7 +221,7 @@ const VendorForm = ({ vendor, onClose }) => {
                 />
               </Field>
               <div className="col-span-2">
-                <Field label="GST No" required error={errors.taxId}>
+                <Field label="GST No" error={errors.taxId}>
                   <input
                     className={`${inputCls(errors.taxId)} uppercase`}
                     placeholder="e.g. 27AAPFU0939F1ZV"
@@ -284,7 +279,7 @@ const VendorForm = ({ vendor, onClose }) => {
                         {(loc.label || `Location ${idx + 1}`)?.toUpperCase?.()}
                       </span>
                       {loc.isDefault && (
-                        <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-medium">
+                        <span className="default-location-chip text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-medium">
                           Default
                         </span>
                       )}
@@ -315,7 +310,7 @@ const VendorForm = ({ vendor, onClose }) => {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="col-span-2">
-                      <Field label="Location name" required error={errors[`loc_${idx}_label`]}>
+                      <Field label="Location name" error={errors[`loc_${idx}_label`]}>
                         <input
                           className={inputCls(errors[`loc_${idx}_label`])}
                           placeholder='e.g. "LOCATION", "WAREHOUSE", "BRANCH"'

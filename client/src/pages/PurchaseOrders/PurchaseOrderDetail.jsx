@@ -4,6 +4,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
   fetchPurchaseOrder,
   updatePOStatus,
+  deletePurchaseOrder,
   clearCurrentOrder,
 } from '../../features/purchaseOrders/purchaseOrdersSlice';
 import { purchaseOrdersAPI } from '../../services/api';
@@ -58,6 +59,17 @@ const PurchaseOrderDetail = () => {
     const { type, status } = confirmAction;
     setConfirmAction(null);
 
+    if (type === 'delete') {
+      const result = await dispatch(deletePurchaseOrder(id));
+      if (deletePurchaseOrder.fulfilled.match(result)) {
+        toast.success('Purchase order deleted');
+        navigate('/purchase-orders');
+      } else {
+        toast.error(result.payload);
+      }
+      return;
+    }
+
     if (type === 'status') {
       const result = await dispatch(updatePOStatus({ id, status }));
       if (updatePOStatus.fulfilled.match(result)) {
@@ -95,7 +107,13 @@ const PurchaseOrderDetail = () => {
   const CONFIRM_CONFIG = {
     pending: { title: 'Move to pending', message: 'Move this legacy draft purchase order to pending?', confirmLabel: 'Move', variant: 'primary' },
     approved_by_admin: { title: 'Mark as Completed', message: 'Mark this purchase order as Completed and send it to Superadmin for approval?', confirmLabel: 'Complete', variant: 'primary' },
-    completed: { title: 'Approve purchase order', message: 'Approve this purchase order? It can no longer be edited; downloads are available after approval.', confirmLabel: 'Approve', variant: 'primary' },
+    completed: { title: 'Approve purchase order', message: 'Approve this purchase order? It can no longer be edited.', confirmLabel: 'Approve', variant: 'primary' },
+    delete: {
+      title: 'Delete purchase order',
+      message: `Are you sure you want to delete "${order?.poNumber || 'this purchase order'}"? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    },
   };
 
   const handleDownload = async (type) => {
@@ -169,8 +187,10 @@ const PurchaseOrderDetail = () => {
   const isApprovedByAdmin = order.status === 'approved_by_admin';
   const isRejected = order.status === 'rejected';
   const isCompleted = order.status === 'completed';
-  const canDownload = isApprovedByAdmin || isCompleted;
+  const canDownload = isPending || isApprovedByAdmin || isCompleted;
+  const canDelete = (isPending || isDraft) && (isPoAdmin || isSuperadmin);
   const lineItems = order.lineItems || [];
+  const hasMissingUnitPrice = isPending && lineItems.some((li) => !Number(li.unitPrice));
 
   const summary = summarizePoAmounts(lineItems, order.shippingCost);
   const roundedSubtotal = summary.subtotal;
@@ -228,10 +248,25 @@ const PurchaseOrderDetail = () => {
                 <div className="flex flex-wrap items-center gap-2">
                   {isDraft && (
                     <>
-                      <Link to={`/purchase-orders/${id}/edit`} className="btn-secondary text-sm">
+                      <Link
+                        to={`/purchase-orders/${id}/edit`}
+                        className="btn-secondary !p-2"
+                        title="Edit"
+                        aria-label="Edit purchase order"
+                      >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                        Edit
                       </Link>
+                      {canDelete && (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmAction({ type: 'delete' })}
+                          className="inline-flex items-center justify-center p-2 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors"
+                          title="Delete"
+                          aria-label="Delete purchase order"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      )}
                       {isPoAdmin && (
                         <>
                           <button type="button" onClick={() => { setRejectReasonText(''); setRejectModalOpen(true); }} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors">
@@ -248,10 +283,25 @@ const PurchaseOrderDetail = () => {
                   )}
                   {isPending && (
                     <>
-                      <Link to={`/purchase-orders/${id}/edit`} className="btn-secondary text-sm">
+                      <Link
+                        to={`/purchase-orders/${id}/edit`}
+                        className="btn-secondary !p-2"
+                        title="Edit"
+                        aria-label="Edit purchase order"
+                      >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                        Edit
                       </Link>
+                      {canDelete && (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmAction({ type: 'delete' })}
+                          className="inline-flex items-center justify-center p-2 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors"
+                          title="Delete"
+                          aria-label="Delete purchase order"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      )}
                       {isPoAdmin && (
                         <>
                           <button type="button" onClick={() => { setRejectReasonText(''); setRejectModalOpen(true); }} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors">
@@ -280,13 +330,13 @@ const PurchaseOrderDetail = () => {
                   )}
                   {canDownload && (
                     <>
-                      <button onClick={() => handleDownload('pdf')} disabled={downloading === 'pdf'} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50">
+                      <button onClick={() => handleDownload('pdf')} disabled={downloading === 'pdf'} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50">
                         <img src={pdfIcon} alt="PDF" className="w-4 h-4" />
-                        {downloading === 'pdf' ? 'Downloading...' : 'Download PDF'}
+                        PDF
                       </button>
-                      <button onClick={() => handleDownload('excel')} disabled={downloading === 'excel'} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors disabled:opacity-50">
+                      <button onClick={() => handleDownload('excel')} disabled={downloading === 'excel'} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors disabled:opacity-50">
                         <img src={excelIcon} alt="Excel" className="w-4 h-4" />
-                        {downloading === 'excel' ? 'Downloading...' : 'Download Excel'}
+                        Excel
                       </button>
                     </>
                   )}
@@ -299,6 +349,18 @@ const PurchaseOrderDetail = () => {
                   <p className="text-sm text-red-900 leading-relaxed whitespace-pre-wrap">
                     {order.rejectionReason?.trim() ? order.rejectionReason : 'No reason was recorded for this rejection.'}
                   </p>
+                </div>
+              )}
+
+              {hasMissingUnitPrice && (
+                <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+                  <svg className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider mb-0.5">Unit price missing</p>
+                    <p className="text-sm text-amber-800">One or more line items have no unit price. Edit the PO and fill in all unit prices before it can be completed.</p>
+                  </div>
                 </div>
               )}
 
@@ -594,10 +656,10 @@ const PurchaseOrderDetail = () => {
 
       <ConfirmModal
         open={!!confirmAction}
-        title={CONFIRM_CONFIG[confirmAction?.status]?.title}
-        message={CONFIRM_CONFIG[confirmAction?.status]?.message}
-        confirmLabel={CONFIRM_CONFIG[confirmAction?.status]?.confirmLabel}
-        variant={CONFIRM_CONFIG[confirmAction?.status]?.variant}
+        title={CONFIRM_CONFIG[confirmAction?.type === 'delete' ? 'delete' : confirmAction?.status]?.title}
+        message={CONFIRM_CONFIG[confirmAction?.type === 'delete' ? 'delete' : confirmAction?.status]?.message}
+        confirmLabel={CONFIRM_CONFIG[confirmAction?.type === 'delete' ? 'delete' : confirmAction?.status]?.confirmLabel}
+        variant={CONFIRM_CONFIG[confirmAction?.type === 'delete' ? 'delete' : confirmAction?.status]?.variant}
         onConfirm={executeConfirmedAction}
         onCancel={cancelConfirm}
       />

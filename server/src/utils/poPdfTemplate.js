@@ -209,6 +209,7 @@ const poPdfHtml = ({ po, amountInWords, assets = {}, fontCss = '' }) => {
   const effectiveLeftSignatureSrc = showAdminSignature ? adminStampSrc : "";
   const effectiveRightSignatureSrc =
     isCompleted && superStampSrc ? superStampSrc : "";
+  const showSignatureSection = isAdminApproved || isCompleted;
   const shippingCost = Math.round(Number(po.shippingCost || 0));
   const summary = summarizePoAmounts(items, po.shippingCost || 0);
   const roundedTotals = {
@@ -391,7 +392,9 @@ const poPdfHtml = ({ po, amountInWords, assets = {}, fontCss = '' }) => {
 
       <div class="amount-words">Amount (in words): ${safe(amountInWords || "")}</div>
 
-      <div class="signature-block">
+      ${
+        showSignatureSection
+          ? `<div class="signature-block">
         <div class="signatures">
           <div class="left-sign">
             <div class="sign-stamp-slot">
@@ -408,7 +411,9 @@ const poPdfHtml = ({ po, amountInWords, assets = {}, fontCss = '' }) => {
             <p>MD & Founder</p>
           </div>
         </div>
-      </div>
+      </div>`
+          : ""
+      }
     </div>
   </body>
 </html>`;

@@ -150,6 +150,9 @@ const purchaseOrdersSlice = createSlice({
       .addCase(deletePurchaseOrder.fulfilled, (state, action) => {
         state.orders = state.orders.filter((o) => o._id !== action.payload);
         state.total -= 1;
+        if (state.currentOrder?._id === action.payload) {
+          state.currentOrder = null;
+        }
       })
       .addCase(fetchDashboard.pending, (state) => {
         state.loading = !state.dashboard;

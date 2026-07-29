@@ -42,7 +42,12 @@ const allowedOrigins = [
   .filter(Boolean)
   .map(normalizeOrigin);
 
-app.use(helmet());
+app.use(
+  helmet({
+    // Allow browser clients on other origins (Vercel frontend) to consume API responses/blobs.
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 app.use(compression());
 const isAllowedOrigin = (origin) => {
   const normalizedOrigin = normalizeOrigin(origin);
@@ -162,6 +167,15 @@ app.use((req, res, next) => {
   };
 
   return next();
+});
+
+app.get('/', (req, res) => {
+  res.json({
+    status: 'OK',
+    service: 'PO Software API',
+    health: '/api/v1/health',
+    basePath: '/api/v1',
+  });
 });
 
 app.get('/api/v1/health', (req, res) => {

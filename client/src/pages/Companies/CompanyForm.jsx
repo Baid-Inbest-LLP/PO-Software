@@ -401,7 +401,7 @@ const CompanyForm = ({ company, onClose }) => {
                         {(loc.label || `Location ${idx + 1}`)?.toUpperCase?.()}
                       </span>
                       {loc.isDefault && (
-                        <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-medium">
+                        <span className="default-location-chip text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-medium">
                           Default
                         </span>
                       )}

@@ -18,7 +18,7 @@ router.use(protect);
 
 router.get('/dashboard', getDashboardStats);
 router.route('/').get(getPurchaseOrders).post(createPurchaseOrder);
-router.route('/:id').get(getPurchaseOrder).put(updatePurchaseOrder).delete(deletePurchaseOrder);
+router.route('/:id').get(getPurchaseOrder).put(updatePurchaseOrder).delete(authorize('PO_ADMIN', 'SUPERADMIN'), deletePurchaseOrder);
 router.patch('/:id/status', authorize('PO_ADMIN', 'SUPERADMIN'), updateStatus);
 router.get('/:id/download/pdf', downloadPDF);
 router.get('/:id/download/excel', downloadExcel);

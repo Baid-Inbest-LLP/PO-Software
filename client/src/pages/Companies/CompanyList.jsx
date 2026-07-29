@@ -130,11 +130,11 @@ const CompanyList = ({ embedded = false }) => {
       ) : (
         <div className="space-y-4">
           {companies.map((company) => (
-            <div key={company._id} className="card p-5">
+            <div key={company._id} className="card company-card p-5">
               {/* Company header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
+                  <div className="company-card-icon w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
                     <svg className="w-5 h-5 text-primary-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
@@ -143,17 +143,17 @@ const CompanyList = ({ embedded = false }) => {
                     <div className="flex items-center gap-2.5 mb-1.5">
                       <h3 className="font-bold text-gray-900 text-base">{company.name}</h3>
                       {company.companyCode && (
-                        <span className="font-mono bg-primary-50 text-primary-700 border border-primary-200 px-2 py-0.5 rounded-md text-xs font-semibold tracking-wide">
+                        <span className="company-code-chip font-mono bg-primary-50 text-primary-700 border border-primary-200 px-2 py-0.5 rounded-md text-xs font-semibold tracking-wide">
                           {company.companyCode}
                         </span>
                       )}
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${company.hasStamp ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-50 text-gray-500 border border-gray-200'}`}>
+                      <span className={`company-stamp-chip text-xs font-medium px-2 py-0.5 rounded-md ${company.hasStamp ? 'company-stamp-chip--present bg-emerald-50 text-emerald-700 border border-emerald-200' : 'company-stamp-chip--missing bg-gray-50 text-gray-500 border border-gray-200'}`}>
                         {company.hasStamp ? 'Stamp on file' : 'No stamp'}
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                       {company.email && (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1">
+                        <span className="company-contact-chip inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1">
                           <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                           </svg>
@@ -161,7 +161,7 @@ const CompanyList = ({ embedded = false }) => {
                         </span>
                       )}
                       {company.phone && (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1">
+                        <span className="company-contact-chip inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1">
                           <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                           </svg>
@@ -169,7 +169,7 @@ const CompanyList = ({ embedded = false }) => {
                         </span>
                       )}
                       {company.taxId && (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1">
+                        <span className="company-gst-chip inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1">
                           <svg className="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
@@ -217,16 +217,16 @@ const CompanyList = ({ embedded = false }) => {
                   {company.locations?.map((loc) => (
                     <div
                       key={loc._id}
-                      className={`rounded-lg border p-3 text-sm ${
+                      className={`company-location-card rounded-lg border p-3 text-sm ${
                         loc.isDefault
-                          ? 'border-primary-300 bg-primary-50'
-                          : 'border-gray-200 bg-gray-50'
+                          ? 'company-location-card--default border-primary-300 bg-primary-50'
+                          : 'company-location-card--standard border-gray-200 bg-gray-50'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-semibold text-gray-800">{loc.label?.toUpperCase?.() || ''}</span>
                         {loc.isDefault && (
-                          <span className="text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded font-medium">
+                          <span className="default-location-chip text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded font-medium">
                             Default
                           </span>
                         )}

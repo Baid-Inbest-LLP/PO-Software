@@ -119,6 +119,7 @@ export const authAPI = {
   }),
   getUserSignature: (id) => api.get(`/auth/users/${id}/signature`),
   updateUser: (id, data) => api.put(`/auth/users/${id}`, data),
+  resetUserPassword: (id, data) => api.patch(`/auth/users/${id}/password`, data),
   deleteUser: (id) => api.delete(`/auth/users/${id}`),
 };
 

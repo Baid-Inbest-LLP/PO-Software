@@ -235,6 +235,16 @@ const updateStatus = async (req, res) => {
     return res.status(403).json({ message: 'Only PO Admin can perform first-level approval' });
   }
 
+  // Unit price must be filled on every line item before the PO can be moved forward.
+  if (order.status === 'pending' && status === 'approved_by_admin') {
+    const missingPrice = (order.lineItems || []).some((li) => !Number(li.unitPrice));
+    if (missingPrice) {
+      return res.status(400).json({
+        message: 'All line items must have a unit price before completing the purchase order',
+      });
+    }
+  }
+
   if (order.status === 'approved_by_admin' && status === 'completed' && !isSuperadmin) {
     return res.status(403).json({ message: 'Only Superadmin can perform final approval' });
   }
@@ -291,6 +301,11 @@ const deletePurchaseOrder = async (req, res) => {
     return res.status(400).json({ message: 'Only pending (or legacy draft) purchase orders can be deleted' });
   }
 
+  const actorRole = normalizeRole(req.user?.role);
+  if (actorRole !== 'PO_ADMIN' && actorRole !== 'SUPERADMIN') {
+    return res.status(403).json({ message: 'Only Admin or Superadmin can delete purchase orders' });
+  }
+
   await order.deleteOne();
   clearDashboardCache();
   clearDocumentCaches();
@@ -318,8 +333,8 @@ const downloadPDF = async (req, res) => {
 
     if (!order) return res.status(404).json({ message: 'Purchase order not found' });
 
-    if (!['approved_by_admin', 'completed'].includes(order.status)) {
-      return res.status(400).json({ message: 'PDF download is only available when the PO is Approved or completed' });
+    if (!['pending', 'approved_by_admin', 'completed'].includes(order.status)) {
+      return res.status(400).json({ message: 'PDF download is only available when the PO is Pending, Approved, or Completed' });
     }
 
     const poObj = order;
@@ -427,8 +442,8 @@ const downloadExcel = async (req, res) => {
 
     if (!order) return res.status(404).json({ message: 'Purchase order not found' });
 
-    if (!['approved_by_admin', 'completed'].includes(order.status)) {
-      return res.status(400).json({ message: 'Excel download is only available when the PO is Approved or completed' });
+    if (!['pending', 'approved_by_admin', 'completed'].includes(order.status)) {
+      return res.status(400).json({ message: 'Excel download is only available when the PO is Pending, Approved, or Completed' });
     }
 
     const assets = getPdfAssets(order);
