@@ -2,6 +2,7 @@ require('dotenv').config();
 require('express-async-errors');
 
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -18,7 +19,6 @@ const purchaseOrderRoutes = require('./src/routes/purchaseOrders');
 const settingsRoutes = require('./src/routes/settings');
 
 const app = express();
-const dbReady = connectDB();
 const GET_RESPONSE_CACHE_TTL_MS = 30 * 1000;
 const GET_RESPONSE_CACHE_MAX_ENTRIES = 500;
 const getResponseCache = new Map();
@@ -83,9 +83,32 @@ app.use(
   })
 );
 app.use(morgan('dev'));
+
+app.get('/', (req, res) => {
+  res.json({
+    status: 'OK',
+    service: 'PO Software API',
+    health: '/api/v1/health',
+    basePath: '/api/v1',
+  });
+});
+
+// Answers even when Mongo is unreachable, so a broken deployment can be diagnosed.
+app.get('/api/v1/health', (req, res) => {
+  const dbStates = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  res.json({
+    status: 'OK',
+    message: 'PO Software API is running',
+    database: dbStates[mongoose.connection.readyState] || 'unknown',
+    deployedAt: new Date().toISOString(),
+  });
+});
+
+// Connecting per request keeps a failed cold-start connection from poisoning the whole
+// instance, and avoids an unhandled rejection at import time on serverless platforms.
 app.use(async (req, res, next) => {
   try {
-    await dbReady;
+    await connectDB();
     next();
   } catch (error) {
     next(error);
@@ -167,19 +190,6 @@ app.use((req, res, next) => {
   };
 
   return next();
-});
-
-app.get('/', (req, res) => {
-  res.json({
-    status: 'OK',
-    service: 'PO Software API',
-    health: '/api/v1/health',
-    basePath: '/api/v1',
-  });
-});
-
-app.get('/api/v1/health', (req, res) => {
-  res.json({ status: 'OK', message: 'PO Software API is running', deployedAt: new Date().toISOString() });
 });
 
 app.use('/api/v1/auth', authRoutes);

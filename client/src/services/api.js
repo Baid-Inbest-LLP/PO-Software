@@ -11,18 +11,11 @@ const normalizeApiBaseUrl = (url) => {
   return `${trimmed}/api/v1`;
 };
 
-// Dev: use Vite proxy (/api). Production: normalize env URL (append /api/v1 when missing).
-// Production: set VITE_API_URL at build time (Render). Docker/nginx uses same-origin /api/v1.
+// Dev uses the Vite proxy. In production the default is same-origin /api/v1, which covers
+// Vercel and Docker/nginx; set VITE_API_URL only when the API lives on another host (Render).
 const baseURL = isDev
   ? (envBaseUrl || '/api/v1')
   : (normalizeApiBaseUrl(envBaseUrl) || '/api/v1');
-
-if (!baseURL) {
-  // eslint-disable-next-line no-console
-  console.error(
-    'Missing VITE_API_URL. Set it in frontend environment variables (example: https://your-backend.onrender.com/api/v1).'
-  );
-}
 
 const api = axios.create({
   baseURL,

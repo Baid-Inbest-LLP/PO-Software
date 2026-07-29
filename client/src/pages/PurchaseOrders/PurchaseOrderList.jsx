@@ -234,7 +234,7 @@ const PurchaseOrderList = () => {
                           <button
                             type="button"
                             onClick={() => setConfirmDelete({ id: order._id, poNumber: order.poNumber })}
-                            className="p-1.5 text-gray-400 hover:text-red-600 rounded transition-colors"
+                            className="p-1.5 text-red-600 hover:text-red-800 rounded transition-colors"
                             title="Delete"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

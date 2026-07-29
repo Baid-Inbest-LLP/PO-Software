@@ -590,7 +590,7 @@ const Settings = () => {
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
                                       strokeWidth={2}
-                                      d="M15 7a4 4 0 11-7.874 1H3m0 0v4m0-4h4m6 4l2 2m0 0l4-4m-4 4v4"
+                                      d="M15.75 5.25a3 3 0 1 1-4.243 4.243L5.25 15.75V18h2.25v2.25h2.25V18h2.25l3.757-3.757a3 3 0 0 1 4.243-4.243l-4.25-4.75Z"
                                     />
                                   </svg>
                                 </button>

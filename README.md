@@ -198,16 +198,23 @@ See `server/src/routes/` for full route definitions.
 
 **PDF generation** uses `@sparticuz/chromium` on Render (via `RENDER=true`).
 
-### Vercel (legacy)
+### Vercel
 
-Deploy **two** Vercel projects from this monorepo:
+Deploy **one** Vercel project from the repo root. The root `vercel.json` serves the built
+client (`client/dist`) from the CDN and routes `/api/*` to the Express app as a single
+serverless function (`api/index.js`), so the UI and API share one origin.
 
-| Project | Root directory | Build command |
-|---------|----------------|---------------|
-| API | `server` | (uses `server/vercel.json`) |
-| UI | `client` | `pnpm build` |
+1. Import the repo in Vercel and leave **Root Directory** empty (the repo root). Build
+   command and output directory come from `vercel.json` — do not override them.
+2. Set environment variables on the project: `MONGODB_URI`, `JWT_SECRET`, `JWT_EXPIRES_IN`,
+   and `NODE_ENV=production`.
+3. In **MongoDB Atlas** → Network Access, allow `0.0.0.0/0` (Vercel functions have no static IPs).
+4. Leave `VITE_API_URL` **unset** so the client calls the same-origin `/api/v1`. `FRONTEND_URL`
+   is not needed either, because there is no cross-origin request.
+5. Verify after deploy: `https://<your-project>.vercel.app/api/v1/health` should report
+   `"database": "connected"`.
 
-Set `VITE_API_URL` on the client to your API URL. Set `FRONTEND_URL` on the server to your client URL.
+**PDF generation** uses `@sparticuz/chromium` on Vercel (via the platform's `VERCEL` env var).
 
 ### AWS (alternative)
 

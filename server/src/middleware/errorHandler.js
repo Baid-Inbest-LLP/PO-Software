@@ -30,8 +30,9 @@ const errorHandler = (err, req, res, next) => {
     message = 'Token expired';
   }
 
-  if (process.env.NODE_ENV === 'development') {
-    console.error(err.stack);
+  // Unexpected failures must reach the platform log, otherwise a production 500 is untraceable.
+  if (statusCode >= 500 || process.env.NODE_ENV === 'development') {
+    console.error(err.stack || err);
   }
 
   res.status(statusCode).json({

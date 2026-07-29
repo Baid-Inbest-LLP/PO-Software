@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+.git
+*.md
+docker-compose.yml
+render.yaml
+client/Dockerfile
+client/nginx.conf
+client/.dockerignore
+server/Dockerfile
+server/.dockerignore
+server/.puppeteerrc.cjs
