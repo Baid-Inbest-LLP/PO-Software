@@ -93,7 +93,7 @@ process.on("SIGTERM", shutdown);
 
 async function renderHtmlToPdfBuffer(
   html,
-  { headerHtml = "", footerHtml = "" } = {},
+  { headerHtml = "", footerHtml = "", bottomMarginMm } = {},
 ) {
   // On Render/Vercel: launch a fresh browser per request (avoids stale/OOM singleton).
   const browser = usePackagedChromium
@@ -123,6 +123,12 @@ async function renderHtmlToPdfBuffer(
       .catch(() => {});
 
     const useNativeTemplates = Boolean(headerHtml || footerHtml);
+    const bottomMm =
+      bottomMarginMm != null
+        ? bottomMarginMm
+        : useNativeTemplates
+          ? 12
+          : 0;
     const buffer = await page.pdf({
       format: "A4",
       printBackground: true,
@@ -131,7 +137,7 @@ async function renderHtmlToPdfBuffer(
       footerTemplate: useNativeTemplates ? (footerHtml || "<div></div>") : undefined,
       margin: {
         top: useNativeTemplates ? "86mm" : "0mm",
-        bottom: useNativeTemplates ? "12mm" : "0mm",
+        bottom: useNativeTemplates ? `${bottomMm}mm` : "0mm",
         right: "0",
         left: "0",
       },

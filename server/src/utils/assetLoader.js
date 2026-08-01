@@ -134,7 +134,22 @@ const mimeFromFilename = (filename, fallbackMime) => {
   const ext = path.extname(filename).toLowerCase();
   if (ext === '.png') return 'image/png';
   if (ext === '.webp') return 'image/webp';
+  if (ext === '.jpg' || ext === '.jpeg') return 'image/jpeg';
   return fallbackMime;
+};
+
+/** Company-specific PO export footer banners (BNB/BILLP share one; BSIBPL has its own). */
+const FOOTER_BNB_BILLP = 'footer-bnb-billp.jpg';
+const FOOTER_BSIBPL = 'footer-bsibpl.jpg';
+
+const resolveCompanyFooterFilename = (companyCode = '') => {
+  const code = String(companyCode || '')
+    .trim()
+    .toUpperCase();
+  if (!code) return '';
+  if (code === 'BNB' || code === 'BILLP') return FOOTER_BNB_BILLP;
+  if (code === 'BSIBPL') return FOOTER_BSIBPL;
+  return '';
 };
 
 const MD_SIGNATURE_STAMP = 'Md_SIGN.png';
@@ -293,4 +308,7 @@ module.exports = {
   getPoDocumentAssetBuffers,
   transparentizeSignaturePng,
   getFontFaceCss,
+  resolveCompanyFooterFilename,
+  FOOTER_BNB_BILLP,
+  FOOTER_BSIBPL,
 };

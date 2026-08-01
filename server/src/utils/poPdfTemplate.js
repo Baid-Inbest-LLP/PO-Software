@@ -137,6 +137,7 @@ const buildPoHeaderFooterContext = ({ po, assets = {} }) => {
     rightMetaRows,
     logoSrc: escapeDataUriAttr(assets.logoSrc || ""),
     shreeSrc: escapeDataUriAttr(assets.shreeSrc || ""),
+    footerSrc: escapeDataUriAttr(assets.footerSrc || ""),
     footerText: safe(officeLoc || shipToPhysical || ""),
   };
 };
@@ -179,9 +180,18 @@ const getHeaderTemplate = (
 const getFooterTemplate = (
   ctx,
   fontCss = '',
-) => `${fontCss ? `<style>${fontCss}</style>` : ''}<div style="width:100%;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+) => {
+  if (ctx.footerSrc) {
+    return `${fontCss ? `<style>${fontCss}</style>` : ''}<div style="width:100%;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+<div style="width:calc(100% - 40px);margin:0 20px;padding:0;box-sizing:border-box;line-height:0;">
+<img src="${ctx.footerSrc}" style="width:100%;height:auto;display:block;" alt="Footer" />
+</div></div>`;
+  }
+
+  return `${fontCss ? `<style>${fontCss}</style>` : ''}<div style="width:100%;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
 <div style="width:calc(100% - 40px);margin:0 20px;padding:4px 10px;display:flex;align-items:center;justify-content:center;background:#13afcd;color:#fff;font-family:'Roboto',Arial,sans-serif;font-size:12px;line-height:1.4;box-sizing:border-box;">
 ${ctx.footerText}</div></div>`;
+};
 
 const poPdfHeaderFooterTemplates = ({ po, assets = {}, fontCss = '' }) => {
   const ctx = buildPoHeaderFooterContext({ po, assets });

@@ -2,7 +2,7 @@ const PurchaseOrder = require('../models/PurchaseOrder');
 const { generatePONumber } = require('../utils/helpers');
 const { normalizePurchaseOrder } = require('../utils/normalize');
 
-const { toDataUri: assetToDataUri, getPoDocumentAssets, getPoDocumentAssetBuffers, getFontFaceCss } = require('../utils/assetLoader');
+const { toDataUri: assetToDataUri, getPoDocumentAssets, getPoDocumentAssetBuffers, getFontFaceCss, resolveCompanyFooterFilename } = require('../utils/assetLoader');
 
 // In-memory PDF/Excel caches (fast repeat downloads). Kept bounded to avoid memory growth.
 const PDF_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
@@ -17,9 +17,11 @@ const dashboardCache = new Map(); // key -> { data, createdAt }
 const getPdfAssets = (po) => {
   const approverSignatureImage = po?.approvedByAdmin?.signatureImage || '';
   const docAssets = getPoDocumentAssets({ approverSignatureImage });
+  const footerFile = resolveCompanyFooterFilename(po?.company?.companyCode);
   const assets = {
     logoSrc: assetToDataUri('Inbest_Logo(Blue).png', 'image/png'),
     shreeSrc: assetToDataUri('shree_red.png', 'image/png'),
+    footerSrc: footerFile ? assetToDataUri(footerFile, 'image/jpeg') : '',
     adminSignatureSrc: docAssets.adminSignatureSrc,
     superadminSignatureSrc: docAssets.superadminSignatureSrc,
   };
@@ -342,11 +344,11 @@ const downloadPDF = async (req, res) => {
 
     const safeName = String(order.poNumber || 'purchase-order').replace(/[\\/:*?"<>|]+/g, '-');
     const approverId = order.approvedByAdmin?._id || 'none';
-    const cacheKey = `${order._id}:${order.status}:v32:${approverId}:${order.updatedAt?.getTime?.() || order.createdAt?.getTime?.() || 0}`;
+    const cacheKey = `${order._id}:${order.status}:v33:${approverId}:${order.updatedAt?.getTime?.() || order.createdAt?.getTime?.() || 0}`;
     const cachedBuffer = getCachedPdf(cacheKey);
     if (cachedBuffer) {
       setDocDebugHeaders(res, {
-        renderVersion: 'v32',
+        renderVersion: 'v33',
         assets,
         status: order.status,
         cacheKey,
@@ -362,7 +364,7 @@ const downloadPDF = async (req, res) => {
     }
 
     setDocDebugHeaders(res, {
-      renderVersion: 'v32',
+      renderVersion: 'v33',
       assets,
       status: order.status,
       cacheKey,
@@ -375,6 +377,7 @@ const downloadPDF = async (req, res) => {
       superLen: String(assets.superadminSignatureSrc || '').length,
       logoLen: String(assets.logoSrc || '').length,
       shreeLen: String(assets.shreeSrc || '').length,
+      footerLen: String(assets.footerSrc || '').length,
     });
     const fontCss = getFontFaceCss();
     const html = poPdfHtml({
@@ -385,7 +388,8 @@ const downloadPDF = async (req, res) => {
     });
 
     const { headerHtml, footerHtml } = poPdfHeaderFooterTemplates({ po: poObj, assets, fontCss });
-    const raw = await renderHtmlToPdfBuffer(html, { headerHtml, footerHtml });
+    const bottomMarginMm = assets.footerSrc ? 30 : 12;
+    const raw = await renderHtmlToPdfBuffer(html, { headerHtml, footerHtml, bottomMarginMm });
     const buffer = Buffer.isBuffer(raw) ? raw : Buffer.from(raw || []);
 
     // Safety: never return non-PDF content as a .pdf download
@@ -453,11 +457,11 @@ const downloadExcel = async (req, res) => {
 
     const safeName = String(order.poNumber || 'purchase-order').replace(/[\\/:*?"<>|]+/g, '-');
     const approverId = order.approvedByAdmin?._id || 'none';
-    const cacheKey = `${order._id}:${order.status}:v19:${approverId}:${order.updatedAt?.getTime?.() || order.createdAt?.getTime?.() || 0}`;
+    const cacheKey = `${order._id}:${order.status}:v20:${approverId}:${order.updatedAt?.getTime?.() || order.createdAt?.getTime?.() || 0}`;
     const cachedBuffer = getCachedExcel(cacheKey);
     if (cachedBuffer) {
       setDocDebugHeaders(res, {
-        renderVersion: 'v19',
+        renderVersion: 'v20',
         assets,
         status: order.status,
         cacheKey,
@@ -473,7 +477,7 @@ const downloadExcel = async (req, res) => {
     }
 
     setDocDebugHeaders(res, {
-      renderVersion: 'v19',
+      renderVersion: 'v20',
       assets,
       status: order.status,
       cacheKey,
@@ -486,6 +490,7 @@ const downloadExcel = async (req, res) => {
       superLen: String(assets.superadminSignatureSrc || '').length,
       logoLen: String(assets.logoSrc || '').length,
       shreeLen: String(assets.shreeSrc || '').length,
+      footerLen: String(assets.footerSrc || '').length,
     });
 
     const buffer = await generatePOExcel(order, assetBuffers);

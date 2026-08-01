@@ -1,7 +1,7 @@
 const ExcelJS = require('exceljs');
 const { amountToWordsINR } = require('./amountToWords');
 const { joinVendorShipFromAddress, joinPoVendorShipFrom } = require('./vendorShipFrom');
-const { readAssetBuffer } = require('./assetLoader');
+const { readAssetBuffer, resolveCompanyFooterFilename } = require('./assetLoader');
 const {
   calcAmount,
   calcDiscountAmt,
@@ -350,13 +350,33 @@ const generatePOExcel = async (po, { adminSignatureBuffer, mdSignatureBuffer } =
   const office = [po.company?.locations?.[0]?.street, po.company?.locations?.[0]?.city, po.company?.locations?.[0]?.state, po.company?.locations?.[0]?.zipCode, po.company?.locations?.[0]?.country].filter(Boolean).join(', ');
   const ship = [po.shippingAddress?.street, po.shippingAddress?.city, po.shippingAddress?.state, po.shippingAddress?.zipCode, po.shippingAddress?.country].filter(Boolean).join(', ');
   r += showSignatureSection ? 5 : 2;
-  ws.mergeCells(`B${r}:L${r}`);
-  const f = ws.getCell(`B${r}`);
-  f.value = office || ship || '';
-  f.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
-  f.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF13AFCD' } };
-  f.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-  ws.getRow(r).height = 24;
+
+  const footerFile = resolveCompanyFooterFilename(companyCode);
+  const footerPng = footerFile ? readAssetBuffer(footerFile) : null;
+  if (footerPng) {
+    // Full-width branded footer banner (BNB/BILLP or BSIBPL).
+    // Images are ~1024×116 / 1024×139; stretch across B:L (~700px printable width).
+    const isBsibpl = String(companyCode || '').trim().toUpperCase() === 'BSIBPL';
+    const footerHeightPx = isBsibpl ? 95 : 80;
+    ws.getRow(r).height = Math.round(footerHeightPx * 0.75);
+    const footerImgId = wb.addImage({
+      buffer: footerPng,
+      extension: 'jpeg',
+    });
+    ws.addImage(footerImgId, {
+      tl: { col: 1.05, row: r - 1 },
+      br: { col: 12.0, row: r },
+      editAs: 'oneCell',
+    });
+  } else {
+    ws.mergeCells(`B${r}:L${r}`);
+    const f = ws.getCell(`B${r}`);
+    f.value = office || ship || '';
+    f.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+    f.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF13AFCD' } };
+    f.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    ws.getRow(r).height = 24;
+  }
 
   return wb.xlsx.writeBuffer();
 };
