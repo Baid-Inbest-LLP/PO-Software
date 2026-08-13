@@ -3,8 +3,8 @@
   "version": 2,
   "framework": null,
   "regions": ["bom1"],
-  "buildCommand": "pnpm --filter client build",
-  "outputDirectory": "client/dist",
+  "buildCommand": "pnpm --filter client build && rm -rf dist && cp -r client/dist dist",
+  "outputDirectory": "dist",
   "functions": {
     "api/index.js": {
       "maxDuration": 60,
