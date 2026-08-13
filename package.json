@@ -13,7 +13,7 @@
     "docker:down": "docker compose down"
   },
   "engines": {
-    "node": "22.x",
+    "node": "24.x",
     "pnpm": ">=9.0.0"
   }
 }

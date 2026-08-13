@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
+  "framework": "vite",
   "regions": ["bom1"],
   "buildCommand": "pnpm --filter client build",
   "outputDirectory": "client/dist",
