@@ -1,10 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "framework": null,
   "regions": ["bom1"],
-  "buildCommand": "pnpm --filter client build && rm -rf dist && cp -r client/dist dist",
-  "outputDirectory": "dist",
+  "buildCommand": "pnpm --filter client build",
+  "outputDirectory": "client/dist",
   "functions": {
     "api/index.js": {
       "maxDuration": 60,
