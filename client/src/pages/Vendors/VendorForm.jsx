@@ -73,9 +73,7 @@ const VendorForm = ({ vendor, onClose }) => {
   const validate = () => {
     const errs = {};
     if (!form.name.trim()) errs.name = 'Vendor name is required';
-    if (!form.contactPerson.trim()) errs.contactPerson = 'Contact person is required';
-    if (!form.phone.trim()) errs.phone = 'Phone number is required';
-    else if (!PHONE_REGEX.test(form.phone.replace(/\s/g, '')))
+    if (form.phone.trim() && !PHONE_REGEX.test(form.phone.replace(/\s/g, '')))
       errs.phone = 'Enter a valid Indian phone number (e.g. 9876543210 or +919876543210)';
     if (form.taxId.trim() && !GST_REGEX.test(form.taxId.toUpperCase()))
       errs.taxId = 'Enter a valid GST number (e.g. 27AAPFU0939F1ZV)';
@@ -203,7 +201,7 @@ const VendorForm = ({ vendor, onClose }) => {
                   />
                 </Field>
               </div>
-              <Field label="Contact Person" required error={errors.contactPerson}>
+              <Field label="Contact Person" error={errors.contactPerson}>
                 <input
                   className={inputCls(errors.contactPerson)}
                   placeholder="John Doe"
@@ -211,7 +209,7 @@ const VendorForm = ({ vendor, onClose }) => {
                   onChange={(e) => handleChange('contactPerson', e.target.value)}
                 />
               </Field>
-              <Field label="Phone" required error={errors.phone}>
+              <Field label="Phone" error={errors.phone}>
                 <input
                   className={inputCls(errors.phone)}
                   placeholder="9876543210 or +919876543210"

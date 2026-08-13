@@ -46,17 +46,18 @@ const vendorSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: [true, 'Phone number is required'],
       trim: true,
+      default: '',
       validate: {
-        validator: (v) => /^(\+91|91)?[6-9]\d{9}$/.test(v.replace(/\s/g, '')),
+        validator: (v) =>
+          !v || /^(\+91|91)?[6-9]\d{9}$/.test(v.replace(/\s/g, '')),
         message: 'Enter a valid Indian phone number (e.g. 9876543210 or +919876543210)',
       },
     },
     contactPerson: {
       type: String,
-      required: [true, 'Contact person is required'],
       trim: true,
+      default: '',
     },
     /** @deprecated Prefer `locations`. Kept for legacy DB rows; migrated into `locations` on validate. */
     address: {
